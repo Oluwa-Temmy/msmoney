@@ -1,16 +1,27 @@
 # Ms Money
 
-**Ms Money** is a simple, no-nonsense business and store management app built for people who just want to run their business — not wrestle with spreadsheets.
 
-Whether you're selling on one platform or juggling multiple stores, Ms Money helps you see exactly where your money is coming from, where it's going, and who you're paying — all in one place. No accounting degree required.
+**Ms Money** is a simple, no-nonsense business, store, and financial management app built for people who just want to run their business — not wrestle with spreadsheets or complicated accounting software.
+
+
+Whether you're selling on one platform or juggling multiple stores, Ms Money helps you see exactly where your money is coming from, where it's going, who you're paying, and how your finances are performing — all in one place. No accounting degree required.
+
 
 ### What you can do with Ms Money
 
 - **Track your stores** — Add all your shops or sales channels and keep them organised in groups
 - **Log income & expenses** — Record transactions manually or import them straight from a CSV file
+- **Manage your finances** — Monitor cash flow, categorize transactions, and keep your business finances healthy
 - **Know your vendors** — Keep tabs on third-party costs like shipping, platform fees, and suppliers
 - **Connect your bank** — Import bank statements to see your real cash flow
-- **See the big picture** — Charts and summaries so you always know how your business is doing
+- **See the big picture** — Charts, summaries, and financial dashboards so you always know how your business is doing
+
+
+## Financial Features
+
+- **Business & Personal Finance**: Track both business and personal transactions for a complete financial overview
+- **Tax Tools**: Organize your data for easier tax preparation and reporting
+- **Vendor & Store Analysis**: Understand where your money goes and optimize your spending
 
 ## Installation
 
