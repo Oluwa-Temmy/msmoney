@@ -1,0 +1,137 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Add Transaction{% endblock %}
+
+{% block header_badge %}Transactions{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* Sidebar */
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    /* Main */
+    
+
+    .page-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.75rem;
+      color: #fff;
+    }
+
+    .form-card {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 540px;
+    }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+      margin-bottom: 0.4rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0f0f13;
+      border: 1px solid #2d2d3d;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      padding: 0.6rem 0.85rem;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: #6366f1; }
+
+    select option { background: #1a1a24; }
+
+    .error-list {
+      list-style: none;
+      margin-top: 0.3rem;
+    }
+
+    .error-list li {
+      font-size: 0.78rem;
+      color: #f87171;
+    }
+
+    .btn-submit {
+      margin-top: 0.5rem;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-submit:hover { background: #4f46e5; }
+
+    .btn-cancel {
+      margin-top: 0.5rem;
+      margin-left: 0.75rem;
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #2d2d3d;
+      border-radius: 8px;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-cancel:hover { background: #20202e; color: #e2e8f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+      <p class="page-title">Add Transaction</p>
+
+      <div class="form-card">
+        <form method="post">
+          {% csrf_token %}
+
+          {% for field in form %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <ul class="error-list">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <div>
+            <button type="submit" class="btn-submit">Save Transaction</button>
+            <a href="{% url 'home' %}" class="btn-cancel">Cancel</a>
+          </div>
+        </form>
+      </div>
+{% endblock %}

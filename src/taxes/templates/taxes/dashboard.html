@@ -1,0 +1,525 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Estimated Taxes {{ year }}{% endblock %}
+
+{% block header_badge %}Taxes{% endblock %}
+
+{% block extra_styles %}
+<style>
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; }
+    .page-title { font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .year-select { background: #1a1a24; border: 1px solid #2d2d3d; color: #e2e8f0; border-radius: 8px; padding: .35rem .65rem; font-size: .87rem; outline: none; cursor: pointer; }
+
+    /* ── Summary cards ── */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .sum-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 0; padding: 1.1rem 1.25rem; }
+    .sum-card .sc-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: .4rem; }
+    .sum-card .sc-val { font-size: 1.4rem; font-weight: 800; }
+    .c-green  { color: #34d399; } .c-red { color: #f87171; }
+    .c-amber  { color: #f59e0b; } .c-blue { color: #60a5fa; } .c-indigo { color: #818cf8; }
+
+    /* ── Two-column layout ── */
+    .body-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 860px) { .body-grid { grid-template-columns: 1fr; } }
+
+    /* ── Sections ── */
+    .section { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 0; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .section-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; color: #475569; font-weight: 700; margin-bottom: 1rem; }
+
+    .calc-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .calc-table tr:not(:last-child) td { border-bottom: 1px solid #1e1e2c; }
+    .calc-table td { padding: .55rem .25rem; vertical-align: middle; }
+    .calc-table td:last-child { text-align: right; font-weight: 700; white-space: nowrap; }
+    .calc-table .sub { color: #475569; font-size: .78rem; padding-left: 1rem; }
+    .calc-table .total-row td { border-top: 1px solid #2d2d3d !important; padding-top: .75rem; color: #fff; font-weight: 800; }
+    .calc-table .deduction { color: #34d399; }
+    .calc-table .tax-line { color: #f87171; }
+    .calc-table .highlight { color: #f59e0b; font-weight: 800; }
+
+    /* ── Brackets table ── */
+    .bkt-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    .bkt-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; padding: .4rem .5rem; text-align: left; border-bottom: 1px solid #2d2d3d; }
+    .bkt-table td { padding: .5rem .5rem; border-bottom: 1px solid #1e1e2c; }
+    .bkt-table tr:last-child td { border-bottom: none; }
+    .bkt-table .rate-cell { color: #f59e0b; font-weight: 700; }
+    .bkt-table .tax-cell { color: #f87171; font-weight: 700; text-align: right; }
+
+    /* ── Quarterly schedule ── */
+    .q-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+    .q-card { background: #13131a; border: 1px solid #2d2d3d; border-radius: 10px; padding: .75rem 1rem; }
+    .q-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; margin-bottom: .25rem; }
+    .q-date  { font-size: .78rem; color: #818cf8; margin-bottom: .3rem; }
+    .q-amt   { font-size: 1.1rem; font-weight: 800; color: #f59e0b; }
+
+    /* ── Store breakdown ── */
+    .store-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .store-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; padding: .4rem .5rem; text-align: left; border-bottom: 1px solid #2d2d3d; }
+    .store-table td { padding: .55rem .5rem; border-bottom: 1px solid #1e1e2c; }
+    .store-table tr:last-child td { border-bottom: none; }
+    .store-table td:not(:first-child) { text-align: right; }
+
+    /* ── Settings form ── */
+    .settings-panel { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 0; padding: 1.25rem 1.5rem; position: sticky; top: 1.5rem; }
+    .sp-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; color: #475569; font-weight: 700; margin-bottom: 1.1rem; }
+    .form-field { margin-bottom: .9rem; }
+    .form-field label { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 600; margin-bottom: .3rem; }
+    .form-field input[type=number], .form-field select, .form-field textarea {
+      width: 100%; background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 7px;
+      color: #e2e8f0; padding: .45rem .65rem; font-size: .85rem; outline: none;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: #4f46e5; }
+    .form-field textarea { resize: vertical; min-height: 60px; }
+    .check-row { display: flex; align-items: center; gap: .5rem; }
+    .check-row input[type=checkbox] { accent-color: #6366f1; width: 15px; height: 15px; }
+    .check-row span { font-size: .83rem; color: #94a3b8; }
+    .btn-save { width: 100%; background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .55rem; font-size: .87rem; font-weight: 600; cursor: pointer; margin-top: .5rem; transition: background .15s; }
+    .btn-save:hover { background: #4f46e5; }
+
+    .disclaimer { font-size: .74rem; color: #334155; line-height: 1.6; margin-top: 1rem; padding: .75rem 1rem; background: #13131a; border-radius: 8px; border: 1px solid #1e1e2c; }
+
+    .progress-bar-wrap { background: #13131a; border-radius: 999px; height: 8px; overflow: hidden; margin-top: .5rem; }
+    .progress-bar { height: 100%; background: #f59e0b; border-radius: 999px; transition: width .3s; }
+
+    .badge-pill { display: inline-block; font-size: .65rem; font-weight: 700; padding: .15rem .4rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+    .badge-due  { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .badge-paid { background: rgba(52,211,153,.15); color: #34d399; }
+
+    /* ── Info modals ── */
+    .info-btn { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25); color: #818cf8; font-size: .6rem; font-weight: 800; cursor: pointer; margin-left: .35rem; vertical-align: middle; flex-shrink: 0; transition: background .15s; line-height: 1; }
+    .info-btn:hover { background: rgba(99,102,241,.28); }
+    .info-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; }
+    .info-backdrop.open { display: flex; }
+    .info-modal { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 16px; padding: 1.75rem 2rem; max-width: 480px; width: 90%; position: relative; }
+    .info-modal-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: .6rem; }
+    .info-modal-desc { font-size: .875rem; color: #94a3b8; line-height: 1.7; margin-bottom: 1rem; }
+    .info-modal-formula { background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px; padding: .6rem .85rem; font-size: .78rem; color: #818cf8; font-family: monospace; line-height: 1.6; white-space: pre-wrap; margin: 0; }
+    .info-modal-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: .3rem; }
+    .info-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #475569; cursor: pointer; font-size: 1.25rem; padding: .25rem .5rem; border-radius: 6px; transition: background .15s, color .15s; line-height: 1; }
+    .info-close:hover { background: #20202e; color: #e2e8f0; }
+    /* S-Corp salary field */
+    .scorp-field { display: none; }
+    .scorp-field.visible { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+      <p class="page-title">Estimated Taxes</p>
+      <form method="get" style="display:inline">
+        <select name="year" class="year-select" onchange="this.form.submit()">
+          {% for y in available_years %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    <!-- ── Top summary cards ── -->
+    <div class="summary-grid">
+      <div class="sum-card">
+        <div class="sc-label">Net Business Income</div>
+        <div class="sc-val {% if net_business >= 0 %}c-green{% else %}c-red{% endif %}">
+          {% if net_business >= 0 %}+{% endif %}${{ net_business|floatformat:2 }}
+        </div>
+      </div>
+      <div class="sum-card">
+        <div class="sc-label">Self-Employment Tax</div>
+        <div class="sc-val c-red">-${{ se_tax|floatformat:2 }}</div>
+      </div>
+      <div class="sum-card">
+        <div class="sc-label">Federal Income Tax</div>
+        <div class="sc-val c-red">-${{ federal_income_tax|floatformat:2 }}</div>
+      </div>
+      {% if state_tax > 0 %}
+      <div class="sum-card">
+        <div class="sc-label">State Tax ({{ state_rate }}%)</div>
+        <div class="sc-val c-red">-${{ state_tax|floatformat:2 }}</div>
+      </div>
+      {% endif %}
+      <div class="sum-card">
+        <div class="sc-label">Total Est. Tax</div>
+        <div class="sc-val c-amber">-${{ total_tax|floatformat:2 }}</div>
+      </div>
+      <div class="sum-card">
+        <div class="sc-label">Effective Rate</div>
+        <div class="sc-val c-amber">{{ effective_rate }}%</div>
+      </div>
+      <div class="sum-card">
+        <div class="sc-label">Quarterly Payment</div>
+        <div class="sc-val c-blue">${{ quarterly_payment|floatformat:2 }}</div>
+      </div>
+    </div>
+
+    <div class="body-grid">
+      <div>
+
+        <!-- ── Calculation breakdown ── -->
+        <div class="section">
+          <p class="section-title">Tax Calculation Breakdown</p>
+          <table class="calc-table">
+            <tr>
+              <td>Gross Business Revenue <button type="button" class="info-btn" data-modal="gross">?</button></td>
+              <td class="c-green">+${{ gross_income|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Business Expenses <button type="button" class="info-btn" data-modal="expenses">?</button></td>
+              <td class="c-red">-${{ total_expenses|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td><strong>Net Business Profit</strong> <button type="button" class="info-btn" data-modal="net">?</button></td>
+              <td class="{% if net_business >= 0 %}c-green{% else %}c-red{% endif %}">
+                {% if net_business >= 0 %}+{% endif %}${{ net_business|floatformat:2 }}
+              </td>
+            </tr>
+            {% if other_income > 0 %}
+            <tr>
+              <td class="sub">+ Other Income (W-2 / other)</td>
+              <td>+${{ other_income|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td class="sub deduction">− ½ Self-Employment Tax (deductible) <button type="button" class="info-btn" data-modal="se_half">?</button></td>
+              <td class="deduction">-${{ se_half_ded|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td><strong>Adjusted Gross Income (AGI)</strong> <button type="button" class="info-btn" data-modal="agi">?</button></td>
+              <td><strong>${{ agi|floatformat:2 }}</strong></td>
+            </tr>
+            <tr>
+              <td class="sub deduction">− Standard Deduction ({{ filing_status|title }}) <button type="button" class="info-btn" data-modal="std_ded">?</button></td>
+              <td class="deduction">-${{ std_deduction|floatformat:2 }}</td>
+            </tr>
+            {% if qbi_deduction > 0 %}
+            <tr>
+              <td class="sub deduction">− QBI Deduction (20% pass-through) <button type="button" class="info-btn" data-modal="qbi">?</button></td>
+              <td class="deduction">-${{ qbi_deduction|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if extra_deductions > 0 %}
+            <tr>
+              <td class="sub deduction">− Additional Deductions</td>
+              <td class="deduction">-${{ extra_deductions|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+              <td><strong>Taxable Income</strong> <button type="button" class="info-btn" data-modal="taxable">?</button></td>
+              <td class="highlight">${{ taxable|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td class="sub tax-line">Federal Income Tax <button type="button" class="info-btn" data-modal="federal">?</button></td>
+              <td class="tax-line">-${{ federal_income_tax|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td class="sub tax-line">Self-Employment Tax (15.3% on 92.35%) <button type="button" class="info-btn" data-modal="se_tax">?</button></td>
+              <td class="tax-line">-${{ se_tax|floatformat:2 }}</td>
+            </tr>
+            {% if state_tax > 0 %}
+            <tr>
+              <td class="sub tax-line">State Income Tax ({{ state_rate }}%)</td>
+              <td class="tax-line">-${{ state_tax|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+              <td><strong>Total Estimated Tax</strong></td>
+              <td class="c-amber"><strong>-${{ total_tax|floatformat:2 }}</strong></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- ── Federal bracket breakdown ── -->
+        {% if brackets_display %}
+        <div class="section">
+          <p class="section-title">Federal Income Tax — Bracket Breakdown</p>
+          <table class="bkt-table">
+            <thead>
+              <tr>
+                <th>Rate</th>
+                <th>Income Range</th>
+                <th style="text-align:right">Taxable in Bracket</th>
+                <th style="text-align:right">Tax</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in brackets_display %}
+              <tr>
+                <td class="rate-cell">{{ b.rate }}</td>
+                <td style="color:#64748b">${{ b.from }} — {% if b.to == '—' %}∞{% else %}${{ b.to }}{% endif %}</td>
+                <td style="text-align:right">${{ b.income }}</td>
+                <td class="tax-cell">-${{ b.tax }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        <!-- ── Per-store breakdown ── -->
+        {% if store_rows %}
+        <div class="section">
+          <p class="section-title">Revenue by Store — {{ year }}</p>
+          <table class="store-table">
+            <thead>
+              <tr>
+                <th>Store</th>
+                <th style="text-align:right">Revenue</th>
+                <th style="text-align:right">Expenses</th>
+                <th style="text-align:right">Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in store_rows %}
+              <tr>
+                <td>{{ row.name }}</td>
+                <td style="color:#34d399">+${{ row.income|floatformat:2 }}</td>
+                <td style="color:#f87171">-${{ row.expenses|floatformat:2 }}</td>
+                <td class="{% if row.net >= 0 %}c-green{% else %}c-red{% endif %}" style="font-weight:700">
+                  {% if row.net >= 0 %}+{% endif %}${{ row.net|floatformat:2 }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+      </div>{# /left column #}
+
+      <!-- ── Right column: quarterly schedule + settings ── -->
+      <div>
+
+        <!-- Quarterly payments -->
+        <div class="section" style="margin-bottom:1.25rem">
+          <p class="section-title">{{ year }} Quarterly Payments</p>
+          <div class="q-grid">
+            {% for due in quarterly_due_dates %}
+            <div class="q-card">
+              <div class="q-label">Q{{ forloop.counter }}</div>
+              <div class="q-date">Due {{ due }}</div>
+              <div class="q-amt">${{ quarterly_payment|floatformat:2 }}</div>
+              {% if forloop.counter <= quarters_elapsed %}
+              <span class="badge-pill badge-due" style="margin-top:.4rem;display:inline-block">Should be paid</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% if quarters_elapsed > 0 %}
+          <div style="margin-top:1rem">
+            <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#475569;margin-bottom:.3rem">
+              <span>Year progress</span>
+              <span>{{ quarters_elapsed }} of 4 quarters</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width:{% widthratio quarters_elapsed 4 100 %}%"></div>
+            </div>
+            <div style="font-size:.78rem;color:#f59e0b;margin-top:.5rem;font-weight:700">
+              Should have paid: ${{ amount_should_have_paid|floatformat:2 }} total
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Settings form -->
+        <div class="settings-panel">
+          <p class="sp-title">Tax Settings — {{ year }}</p>
+          <form method="post" action="{% url 'tax_save_profile' %}">
+            {% csrf_token %}
+            <input type="hidden" name="year" value="{{ year }}" />
+            <div class="form-field">
+              <label>Business Entity Type</label>
+              <select name="business_type" id="businessTypeSelect">
+                {% for val, label in business_type_choices %}
+                <option value="{{ val }}" {% if val == business_type %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-field scorp-field" id="scorpSalaryField">
+              <label>Owner W-2 Salary <button type="button" class="info-btn" data-modal="scorp_salary">?</button></label>
+              <input type="number" name="owner_salary" value="{{ owner_salary|floatformat:2 }}" min="0" step="0.01" placeholder="Your salary from the S-Corp" />
+            </div>
+            <div class="form-field">
+              <label>Personal Filing Status</label>
+              <select name="filing_status">
+                {% for val, label in filing_status_choices %}
+                <option value="{{ val }}" {% if val == filing_status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Other Income (W-2, etc.)</label>
+              <input type="number" name="other_income" value="{{ other_income|floatformat:2 }}" min="0" step="0.01" />
+            </div>
+            <div class="form-field">
+              <label>State</label>
+              <select id="stateSelect">
+                <option value="">— Select state —</option>
+                <option value="AL">Alabama (5.0%)</option>
+                <option value="AK">Alaska (0%)</option>
+                <option value="AZ">Arizona (2.5%)</option>
+                <option value="AR">Arkansas (4.7%)</option>
+                <option value="CA">California (9.3%)</option>
+                <option value="CO">Colorado (4.4%)</option>
+                <option value="CT">Connecticut (6.99%)</option>
+                <option value="DE">Delaware (6.6%)</option>
+                <option value="FL">Florida (0%)</option>
+                <option value="GA">Georgia (5.49%)</option>
+                <option value="HI">Hawaii (8.25%)</option>
+                <option value="ID">Idaho (5.8%)</option>
+                <option value="IL">Illinois (4.95%)</option>
+                <option value="IN">Indiana (3.15%)</option>
+                <option value="IA">Iowa (5.7%)</option>
+                <option value="KS">Kansas (5.7%)</option>
+                <option value="KY">Kentucky (4.5%)</option>
+                <option value="LA">Louisiana (3.0%)</option>
+                <option value="ME">Maine (7.15%)</option>
+                <option value="MD">Maryland (5.75%)</option>
+                <option value="MA">Massachusetts (5.0%)</option>
+                <option value="MI">Michigan (4.25%)</option>
+                <option value="MN">Minnesota (9.85%)</option>
+                <option value="MS">Mississippi (5.0%)</option>
+                <option value="MO">Missouri (4.7%)</option>
+                <option value="MT">Montana (6.75%)</option>
+                <option value="NE">Nebraska (5.84%)</option>
+                <option value="NV">Nevada (0%)</option>
+                <option value="NH">New Hampshire (0%)</option>
+                <option value="NJ">New Jersey (10.75%)</option>
+                <option value="NM">New Mexico (5.9%)</option>
+                <option value="NY">New York (6.85%)</option>
+                <option value="NC">North Carolina (4.75%)</option>
+                <option value="ND">North Dakota (2.5%)</option>
+                <option value="OH">Ohio (3.99%)</option>
+                <option value="OK">Oklahoma (4.75%)</option>
+                <option value="OR">Oregon (9.9%)</option>
+                <option value="PA">Pennsylvania (3.07%)</option>
+                <option value="RI">Rhode Island (5.99%)</option>
+                <option value="SC">South Carolina (6.5%)</option>
+                <option value="SD">South Dakota (0%)</option>
+                <option value="TN">Tennessee (0%)</option>
+                <option value="TX">Texas (0%)</option>
+                <option value="UT">Utah (4.65%)</option>
+                <option value="VT">Vermont (8.75%)</option>
+                <option value="VA">Virginia (5.75%)</option>
+                <option value="WA">Washington (0%)</option>
+                <option value="WV">West Virginia (5.12%)</option>
+                <option value="WI">Wisconsin (7.65%)</option>
+                <option value="WY">Wyoming (0%)</option>
+                <option value="DC">D.C. (8.5%)</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>State Tax Rate (%)</label>
+              <input type="number" name="state_tax_rate" id="stateTaxRateInput" value="{{ state_rate }}" min="0" max="20" step="0.01" placeholder="e.g. 5.0" />
+            </div>
+            <div class="form-field">
+              <label>Additional Deductions</label>
+              <input type="number" name="extra_deductions" value="{{ extra_deductions|floatformat:2 }}" min="0" step="0.01" placeholder="Home office, health ins…" />
+            </div>
+            <div class="form-field">
+              <div class="check-row">
+                <input type="checkbox" name="qbi_eligible" id="qbi" {% if qbi_eligible %}checked{% endif %} />
+                <label for="qbi" style="text-transform:none;letter-spacing:0;margin:0;font-size:.83rem;color:#94a3b8">Eligible for QBI deduction (20%)</label>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Notes</label>
+              <textarea name="notes" placeholder="e.g. Waiting on 1099s…">{% if profile %}{{ profile.notes }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="btn-save">Save &amp; Recalculate</button>
+          </form>
+
+          <div class="disclaimer">
+            <strong style="color:#475569">Disclaimer:</strong> These are <em>estimates only</em> based on 2024 federal brackets and simplified rules. Consult a tax professional for accurate filings.
+          </div>
+        </div>
+
+      </div>{# /right column #}
+    </div>{# /body-grid #}
+
+  <!-- Info modal -->
+  <div class="info-backdrop" id="infoBackdrop">
+    <div class="info-modal">
+      <button type="button" class="info-close" id="infoClose">✕</button>
+      <p class="info-modal-title" id="infoTitle"></p>
+      <p class="info-modal-desc" id="infoDesc"></p>
+      <p class="info-modal-label">Calculation</p>
+      <pre class="info-modal-formula" id="infoFormula"></pre>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ── Info modal data ─────────────────────────────────────────────────────────────
+const MODAL_DATA = {
+  gross:        { title: 'Gross Business Revenue',      desc: 'The total income recorded across all your stores for this tax year. This is top-line revenue before any deductions or expenses are taken out — what you report as total business receipts on Schedule C.',                                                                      formula: 'Sum of all income transactions in the year' },
+  expenses:     { title: 'Business Expenses',           desc: 'All costs directly related to running your business, recorded as expense transactions. These are fully deductible and directly reduce your taxable profit. Keep receipts and records for everything you claim.',                                                                         formula: 'Sum of all expense transactions in the year' },
+  net:          { title: 'Net Business Profit',         desc: 'Your gross revenue minus all business expenses — your Schedule C net profit. It is the starting point for self-employment tax and income tax calculations. A positive number means profit; negative means a loss you can carry forward.',                                              formula: 'Gross Revenue − Business Expenses' },
+  se_half:      { title: '½ SE Tax Deduction',          desc: 'The IRS lets you deduct half of your self-employment tax when calculating your AGI. This above-the-line deduction is available even if you take the standard deduction, and it reduces your income tax (but not your SE tax).',                                                    formula: 'SE Tax × 50%' },
+  agi:          { title: 'Adjusted Gross Income (AGI)', desc: 'Your total income from all sources after above-the-line deductions. For self-employed people this includes deducting half of SE tax. AGI determines eligibility for many credits and deductions, and is the base for calculating income tax.',                                          formula: 'Net Business Profit + Other Income − ½ SE Tax' },
+  std_ded:      { title: 'Standard Deduction',          desc: 'A fixed dollar amount subtracted from AGI instead of itemizing deductions. For most self-employed individuals the standard deduction is simpler and larger than itemizing. It is based on your personal filing status.',                                                                formula: 'Single: $14,600 | Married Jointly: $29,200 | Head of Household: $21,900  (2024)' },
+  qbi:          { title: 'QBI Deduction (Sec. 199A)',   desc: 'The Qualified Business Income deduction lets eligible sole proprietors, LLCs, and S-corps deduct up to 20% of qualified business income from federal income tax. One of the most valuable deductions available to small business owners.',                                            formula: 'Net Business Profit × 20%  (subject to taxable income limits)' },
+  taxable:      { title: 'Taxable Income',              desc: 'The final income amount your federal tax bracket rates are applied to. It is what remains after all deductions have been subtracted from your AGI. Reducing this number is the primary goal of tax planning.',                                                                          formula: 'AGI − Standard Deduction − QBI Deduction − Additional Deductions' },
+  federal:      { title: 'Federal Income Tax',          desc: 'Income tax owed to the federal government, calculated using progressive brackets. You only pay each rate on the income slice within that bracket — not on your entire income. See the bracket table for your specific breakdown.',                                                      formula: 'Progressive: 10% → 12% → 22% → 24% → 32% → 35% → 37%  applied to each slice' },
+  se_tax:       { title: 'Self-Employment Tax',         desc: 'SE tax covers Social Security (12.4%) and Medicare (2.9%) — totalling 15.3% — on 92.35% of your net self-employment earnings. You pay both the employer and employee share. Half of it is deductible from your income taxes.',                                                    formula: 'Net Earnings × 92.35% × 15.3%\n(S-Corps: only applies to your W-2 owner salary)' },
+  scorp_salary: { title: 'S-Corp Owner W-2 Salary',    desc: 'S-Corp owners must pay themselves a “reasonable compensation” W-2 salary. Self-employment (payroll) tax of 15.3% applies only to this salary — not to distributions from the S-Corp. This is the primary tax advantage of S-Corp status.',                                        formula: 'SE Tax base = Owner Salary × 92.35% × 15.3%\n(Distributions are not subject to SE/payroll tax)' },
+};
+
+const backdrop = document.getElementById('infoBackdrop');
+const closeBtn  = document.getElementById('infoClose');
+
+function openModal(key) {
+  var d = MODAL_DATA[key];
+  if (!d) return;
+  document.getElementById('infoTitle').textContent   = d.title;
+  document.getElementById('infoDesc').textContent    = d.desc;
+  document.getElementById('infoFormula').textContent = d.formula;
+  backdrop.classList.add('open');
+}
+
+document.querySelectorAll('.info-btn[data-modal]').forEach(function(btn) {
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    openModal(btn.dataset.modal);
+  });
+});
+closeBtn.addEventListener('click', function() { backdrop.classList.remove('open'); });
+backdrop.addEventListener('click', function(e) { if (e.target === backdrop) backdrop.classList.remove('open'); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') backdrop.classList.remove('open'); });
+
+// ── State → rate lookup ───────────────────────────────────────────────────────────
+const STATE_RATES = {
+  AL:'5.00',AK:'0.00',AZ:'2.50',AR:'4.70',CA:'9.30',CO:'4.40',CT:'6.99',DE:'6.60',
+  FL:'0.00',GA:'5.49',HI:'8.25',ID:'5.80',IL:'4.95',IN:'3.15',IA:'5.70',KS:'5.70',
+  KY:'4.50',LA:'3.00',ME:'7.15',MD:'5.75',MA:'5.00',MI:'4.25',MN:'9.85',MS:'5.00',
+  MO:'4.70',MT:'6.75',NE:'5.84',NV:'0.00',NH:'0.00',NJ:'10.75',NM:'5.90',NY:'6.85',
+  NC:'4.75',ND:'2.50',OH:'3.99',OK:'4.75',OR:'9.90',PA:'3.07',RI:'5.99',SC:'6.50',
+  SD:'0.00',TN:'0.00',TX:'0.00',UT:'4.65',VT:'8.75',VA:'5.75',WA:'0.00',WV:'5.12',
+  WI:'7.65',WY:'0.00',DC:'8.50'
+};
+var stateSelect = document.getElementById('stateSelect');
+var rateInput   = document.getElementById('stateTaxRateInput');
+if (stateSelect && rateInput) {
+  stateSelect.addEventListener('change', function() {
+    var rate = STATE_RATES[this.value];
+    if (rate !== undefined) rateInput.value = rate;
+  });
+}
+
+// ── S-Corp salary field toggle ───────────────────────────────────────────────────
+var bizTypeSelect = document.getElementById('businessTypeSelect');
+var scorpField    = document.getElementById('scorpSalaryField');
+function toggleScorpField() {
+  if (!bizTypeSelect || !scorpField) return;
+  if (bizTypeSelect.value === 's_corp') {
+    scorpField.classList.add('visible');
+  } else {
+    scorpField.classList.remove('visible');
+  }
+}
+if (bizTypeSelect) {
+  toggleScorpField();
+  bizTypeSelect.addEventListener('change', toggleScorpField);
+}
+</script>
+{% endblock %}

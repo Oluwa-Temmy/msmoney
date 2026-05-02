@@ -1,0 +1,699 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Dashboard{% endblock %}
+
+{% block header_badge %}Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ── Top Bar ── */
+    
+
+    
+
+    
+
+    /* ── Layout ── */
+    
+
+    /* ── Sidebar ── */
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    /* ── Main Content ── */
+    
+
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Overview donut panel ── */
+    .overview-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 760px) { .overview-panel { grid-template-columns: 1fr; } }
+
+    .donut-card {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .donut-card-title {
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #475569;
+      margin-bottom: .15rem;
+    }
+    .donut-card-total {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .donut-wrap {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 1.1rem;
+      flex-shrink: 0;
+      overflow: visible;
+    }
+    .donut-wrap canvas { width: 100% !important; height: 100% !important; overflow: visible; }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .dc-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; }
+    .dc-value { font-size: 1.05rem; font-weight: 800; }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      width: 100%;
+    }
+    .dl-row {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      font-size: .8rem;
+    }
+    .dl-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dl-name { flex: 1; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dl-pct  { font-size: .72rem; color: #475569; white-space: nowrap; }
+    .dl-val  { font-weight: 700; white-space: nowrap; }
+    .dl-val.pos { color: #34d399; }
+    .dl-val.neg { color: #f87171; }
+
+    /* ── Transaction Table ── */
+    .table-wrap {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-
+
+    .table-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #475569;
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid #2d2d3d;
+    }
+
+    tbody tr {
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover { background: #20202e; }
+
+    tbody td {
+      padding: 0.85rem 1.5rem;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #1e1e2c;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    .pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      text-transform: capitalize;
+    }
+
+    .pill.income  { background: rgba(52,211,153,0.15); color: #34d399; }
+    .pill.expense { background: rgba(248,113,113,0.15); color: #f87171; }
+
+    .amount.income  { color: #34d399; font-weight: 600; }
+    .amount.expense { color: #f87171; font-weight: 600; }
+
+    .empty {
+      text-align: center;
+      padding: 3rem;
+      color: #475569;
+      font-size: 0.9rem;
+    }
+
+    .admin-link {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: #6366f1;
+      text-decoration: none;
+      border: 1px solid #6366f1;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .admin-link:hover { background: rgba(99,102,241,0.15); }
+
+    /* ── Stores Section ── */
+    .stores-section { margin-bottom: 2.5rem; }
+
+    .stores-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .store-stat-card {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .store-stat-card.grouped-card {
+      border-color: #3730a3;
+      grid-column: 1 / -1;
+    }
+
+    .store-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+
+    .store-card-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .store-platform-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #818cf8;
+      background: rgba(99,102,241,0.12);
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .group-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #a78bfa;
+      background: rgba(167,139,250,0.12);
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .store-stats-row {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .store-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .store-stat .s-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #475569;
+    }
+
+    .store-stat .s-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .s-value.profit-pos { color: #34d399; }
+    .s-value.profit-neg { color: #f87171; }
+    .s-value.income-val { color: #34d399; }
+    .s-value.expense-val { color: #f87171; }
+    .s-value.count-val  { color: #818cf8; }
+
+    .grouped-stores-list {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #2d2d3d;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .grouped-store-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .grouped-store-row .gs-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #94a3b8;
+      min-width: 140px;
+    }
+
+    .gs-mini-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .gs-mini-stats span { color: #475569; }
+    .gs-mini-stats .gs-income  { color: #34d399; }
+    .gs-mini-stats .gs-expense { color: #f87171; }
+    .gs-mini-stats .gs-profit-p { color: #34d399; font-weight: 600; }
+    .gs-mini-stats .gs-profit-n { color: #f87171; font-weight: 600; }
+
+    /* ── Charts ── */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .chart-card-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; margin-bottom: 1rem; }
+    .chart-card canvas { max-height: 220px; }
+    .chart-full { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .chart-full canvas { max-height: 200px; }
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+
+    <p class="section-title">Overview</p>
+
+    {% if has_stores %}
+    <div class="overview-panel">
+
+      <!-- Income share donut -->
+      <div class="donut-card">
+        <div class="donut-card-title">Income Contribution</div>
+        <div class="donut-card-total" style="color:#34d399">+${{ total_income|floatformat:2 }}</div>
+        <div class="donut-wrap">
+          <canvas id="donutIncome"></canvas>
+          <div class="donut-center">
+            <span class="dc-label">Total</span>
+            <span class="dc-value" style="color:#34d399">+${{ total_income|floatformat:0 }}</span>
+          </div>
+        </div>
+        <div class="donut-legend" id="legendIncome"></div>
+      </div>
+
+      <!-- Profit share donut -->
+      <div class="donut-card">
+        <div class="donut-card-title">Net Profit by Store</div>
+        <div class="donut-card-total" style="color:{% if profit >= 0 %}#34d399{% else %}#f87171{% endif %}">
+          {% if profit >= 0 %}+{% endif %}${{ profit|floatformat:2 }}
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donutProfit"></canvas>
+          <div class="donut-center">
+            <span class="dc-label">Net</span>
+            <span class="dc-value" style="color:{% if profit >= 0 %}#34d399{% else %}#f87171{% endif %}">
+              {% if profit >= 0 %}+{% endif %}${{ profit|floatformat:0 }}
+            </span>
+          </div>
+        </div>
+        <div class="donut-legend" id="legendProfit"></div>
+      </div>
+
+    </div>
+    {% else %}
+    <!-- fallback when no stores yet -->
+    <div class="cards">
+      <div class="card profit">
+        <div class="label">Net Profit</div>
+        <div class="value">{% if profit >= 0 %}+{% endif %}${{ profit|floatformat:2 }}</div>
+        <div class="sub">Income minus expenses</div>
+      </div>
+      <div class="card income">
+        <div class="label">Total Income</div>
+        <div class="value">+${{ total_income|floatformat:2 }}</div>
+        <div class="sub">All recorded revenue</div>
+      </div>
+      <div class="card expense">
+        <div class="label">Total Expenses</div>
+        <div class="value">-${{ total_expenses|floatformat:2 }}</div>
+        <div class="sub">All recorded costs</div>
+      </div>
+      <div class="card count">
+        <div class="label">Transactions</div>
+        <div class="value">{{ transaction_count }}</div>
+        <div class="sub">Total entries logged</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Daily trend chart ── -->
+    <div class="chart-full">
+      <p class="chart-card-title">Daily Profit Trend</p>
+      <canvas id="chartDaily"></canvas>
+    </div>
+
+    {% if has_stores %}
+    <div class="stores-section">
+      <p class="section-title">Stores &amp; Businesses</p>
+      <div class="stores-grid">
+
+        {% for g in store_groups %}
+        <div class="store-stat-card grouped-card">
+          <div class="store-card-head">
+            <span class="store-card-name">{{ g.group.name }}</span>
+            <span class="group-badge">{{ g.stores|length }} store{{ g.stores|length|pluralize }}</span>
+          </div>
+          <div class="store-stats-row">
+            <div class="store-stat">
+              <span class="s-label">Net Profit</span>
+              <span class="s-value {% if g.profit >= 0 %}profit-pos{% else %}profit-neg{% endif %}">
+                {% if g.profit >= 0 %}+{% endif %}${{ g.profit|floatformat:2 }}
+              </span>
+            </div>
+            <div class="store-stat">
+              <span class="s-label">Income</span>
+              <span class="s-value income-val">+${{ g.income|floatformat:2 }}</span>
+            </div>
+            <div class="store-stat">
+              <span class="s-label">Expenses</span>
+              <span class="s-value expense-val">-${{ g.expenses|floatformat:2 }}</span>
+            </div>
+          </div>
+          <div class="grouped-stores-list">
+            {% for store in g.stores %}
+            <div class="grouped-store-row">
+              <span class="gs-name">{{ store.name }} <span style="color:#3730a3;font-size:0.7rem;">{{ store.get_platform_display }}</span></span>
+              <div class="gs-mini-stats">
+                <span>{{ store.stat_tx_count }} tx</span>
+                <span class="gs-income">+${{ store.stat_income|floatformat:2 }}</span>
+                <span class="gs-expense">-${{ store.stat_expenses|floatformat:2 }}</span>
+                <span class="{% if store.stat_profit >= 0 %}gs-profit-p{% else %}gs-profit-n{% endif %}">
+                  {% if store.stat_profit >= 0 %}+{% endif %}${{ store.stat_profit|floatformat:2 }}
+                </span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+
+        {% for store in ungrouped_stores %}
+        <div class="store-stat-card">
+          <div class="store-card-head">
+            <span class="store-card-name">{{ store.name }}</span>
+            <span class="store-platform-badge">{{ store.get_platform_display }}</span>
+          </div>
+          <div class="store-stats-row">
+            <div class="store-stat">
+              <span class="s-label">Net Profit</span>
+              <span class="s-value {% if store.stat_profit >= 0 %}profit-pos{% else %}profit-neg{% endif %}">
+                {% if store.stat_profit >= 0 %}+{% endif %}${{ store.stat_profit|floatformat:2 }}
+              </span>
+            </div>
+            <div class="store-stat">
+              <span class="s-label">Income</span>
+              <span class="s-value income-val">+${{ store.stat_income|floatformat:2 }}</span>
+            </div>
+            <div class="store-stat">
+              <span class="s-label">Expenses</span>
+              <span class="s-value expense-val">-${{ store.stat_expenses|floatformat:2 }}</span>
+            </div>
+            <div class="store-stat">
+              <span class="s-label">Transactions</span>
+              <span class="s-value count-val">{{ store.stat_tx_count }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Store comparison chart ── -->
+    {% if has_stores %}
+    <div class="charts-row">
+      <div class="chart-card">
+        <p class="chart-card-title">Income vs Expenses by Store</p>
+        <canvas id="chartStoresBars"></canvas>
+      </div>
+      <div class="chart-card">
+        <p class="chart-card-title">Net Profit by Store</p>
+        <canvas id="chartStoresProfit"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <h2>Recent Transactions</h2>
+        <a class="admin-link" href="{% url 'add_transaction' %}">+ Add Entry</a>
+      </div>
+
+      {% if recent_transactions %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Title</th>
+            <th>Store</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in recent_transactions %}
+          <tr>
+            <td>{{ tx.date }}</td>
+            <td>{{ tx.title }}</td>
+            <td>{{ tx.store.name|default:"—" }}</td>
+            <td>{{ tx.category|default:"—" }}</td>
+            <td><span class="pill {{ tx.type }}">{{ tx.get_type_display }}</span></td>
+            <td class="amount {{ tx.type }}">
+              {% if tx.type == "income" %}+{% else %}-{% endif %}${{ tx.amount|floatformat:2 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">
+        No transactions yet. <a class="admin-link" href="{% url 'add_transaction' %}">Add your first entry</a>
+      </div>
+      {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- /.layout -->
+
+<script>
+(function() {
+  const GRID   = 'rgba(45,45,61,0.6)';
+  const TICK   = '#475569';
+  const GREEN  = '#34d399';
+  const RED    = '#f87171';
+  const INDIGO = '#818cf8';
+  const GREEN_A = 'rgba(52,211,153,0.15)';
+  const RED_A   = 'rgba(248,113,113,0.15)';
+
+  Chart.defaults.color = TICK;
+  Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+  // Palette for stores
+  const PALETTE = [
+    '#6366f1','#34d399','#f87171','#f59e0b','#60a5fa',
+    '#a78bfa','#fb923c','#38bdf8','#4ade80','#e879f9',
+  ];
+
+  function gridOpts() { return { color: GRID, drawBorder: false }; }
+  function tickOpts() { return { color: TICK }; }
+
+  function fmt(v) { return '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+  /* ── Donut builder ── */
+  function buildDonut(canvasId, legendId, labels, values, colors, totalPositive) {
+    const el = document.getElementById(canvasId);
+    const leg = document.getElementById(legendId);
+    if (!el || !labels.length) return;
+
+    // For profit donut use absolute values; negative stores get red
+    const absVals = values.map(v => Math.abs(v));
+    const total = absVals.reduce((a,b) => a+b, 0) || 1;
+
+    new Chart(el, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{ data: absVals, backgroundColor: colors, borderColor: '#0f0f13', borderWidth: 2, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: false,
+        clip: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            position: 'nearest',
+            xAlign: 'center',
+            yAlign: 'bottom',
+            callbacks: {
+              label: ctx => {
+                const pct = ((ctx.raw / total) * 100).toFixed(1);
+                return ` ${ctx.label}: ${fmt(values[ctx.dataIndex])} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Build legend
+    labels.forEach((name, i) => {
+      const pct = ((absVals[i] / total) * 100).toFixed(1);
+      const isNeg = values[i] < 0;
+      const row = document.createElement('div');
+      row.className = 'dl-row';
+      row.innerHTML = `
+        <span class="dl-dot" style="background:${colors[i]}"></span>
+        <span class="dl-name">${name}</span>
+        <span class="dl-pct">${pct}%</span>
+        <span class="dl-val ${isNeg ? 'neg' : 'pos'}">${isNeg ? '-' : '+'}${fmt(values[i])}</span>
+      `;
+      leg.appendChild(row);
+    });
+  }
+
+  const stores = {{ chart_stores|safe }};
+  if (stores.labels && stores.labels.length) {
+    const colors = stores.labels.map((_,i) => PALETTE[i % PALETTE.length]);
+    buildDonut('donutIncome', 'legendIncome', stores.labels, stores.income, colors, true);
+    buildDonut('donutProfit', 'legendProfit', stores.labels, stores.profit,
+      stores.profit.map((v,i) => v >= 0 ? PALETTE[i % PALETTE.length] : RED), false);
+  }
+  const daily = {{ chart_daily|safe }};
+  if (document.getElementById('chartDaily') && daily.labels.length) {
+    new Chart(document.getElementById('chartDaily'), {
+      type: 'bar',
+      data: {
+        labels: daily.labels,
+        datasets: [
+          { label: 'Income',   data: daily.income,   backgroundColor: GREEN_A, borderColor: GREEN,  borderWidth: 1.5, borderRadius: 3 },
+          { label: 'Expenses', data: daily.expenses, backgroundColor: RED_A,   borderColor: RED,    borderWidth: 1.5, borderRadius: 3 },
+          { label: 'Net Profit', data: daily.profit, type: 'line', borderColor: INDIGO, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'y' },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: TICK, boxWidth: 10, font: { size: 11 } } } },
+        scales: {
+          x: { grid: gridOpts(), ticks: { ...tickOpts(), maxTicksLimit: 14, font: { size: 10 } } },
+          y: { grid: gridOpts(), ticks: { ...tickOpts(), callback: v => '$' + v } }
+        }
+      }
+    });
+  }
+
+  /* ── Store income vs expenses (grouped bar) ── */
+  if (document.getElementById('chartStoresBars') && stores.labels.length) {
+    new Chart(document.getElementById('chartStoresBars'), {
+      type: 'bar',
+      data: {
+        labels: stores.labels,
+        datasets: [
+          { label: 'Income',   data: stores.income,   backgroundColor: GREEN_A, borderColor: GREEN, borderWidth: 1.5, borderRadius: 4 },
+          { label: 'Expenses', data: stores.expenses, backgroundColor: RED_A,   borderColor: RED,   borderWidth: 1.5, borderRadius: 4 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { labels: { color: TICK, boxWidth: 10, font: { size: 11 } } } },
+        scales: {
+          x: { grid: gridOpts(), ticks: tickOpts() },
+          y: { grid: gridOpts(), ticks: { ...tickOpts(), callback: v => '$' + v } }
+        }
+      }
+    });
+  }
+
+  /* ── Store net profit (horizontal bar) ── */
+  if (document.getElementById('chartStoresProfit') && stores.labels.length) {
+    new Chart(document.getElementById('chartStoresProfit'), {
+      type: 'bar',
+      data: {
+        labels: stores.labels,
+        datasets: [{
+          label: 'Net Profit',
+          data: stores.profit,
+          backgroundColor: stores.profit.map(v => v >= 0 ? GREEN_A : RED_A),
+          borderColor:      stores.profit.map(v => v >= 0 ? GREEN  : RED),
+          borderWidth: 1.5,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: gridOpts(), ticks: { ...tickOpts(), callback: v => '$' + v } },
+          y: { grid: gridOpts(), ticks: tickOpts() }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

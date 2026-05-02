@@ -1,0 +1,74 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Add Bank Account{% endblock %}
+
+{% block header_badge %}Banking{% endblock %}
+
+{% block extra_styles %}
+<style>
+.form-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 2rem; max-width: 500px; }
+    .form-title { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: .75rem; font-weight: 600; color: #94a3b8; margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .06em; }
+    .form-group input, .form-group select {
+      width: 100%; background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px;
+      color: #e2e8f0; padding: .6rem .85rem; font-size: .9rem; outline: none; transition: border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: #6366f1; }
+    .form-group input::placeholder { color: #334155; }
+    .form-group select option { background: #1a1a24; }
+    .form-hint { font-size: .75rem; color: #334155; margin-top: .3rem; }
+    .form-row { display: flex; gap: .75rem; }
+    .form-row .form-group { flex: 1; }
+
+    .btn-submit { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .6rem 1.25rem; font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-submit:hover { background: #4f46e5; }
+    .btn-cancel { background: transparent; border: 1px solid #2d2d3d; color: #64748b; border-radius: 8px; padding: .6rem 1.25rem; font-size: .9rem; font-weight: 600; text-decoration: none; transition: background .15s, color .15s; display: inline-block; }
+    .btn-cancel:hover { background: #20202e; color: #e2e8f0; }
+    .form-actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+
+    .btn-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: #475569; text-decoration: none; margin-bottom: 1.25rem; }
+    .btn-back:hover { color: #818cf8; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <a href="{% url 'account_list' %}" class="btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      All Accounts
+    </a>
+
+    <div class="form-card">
+      <p class="form-title">Add Bank Account</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="name">Account Name *</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Business Checking" required maxlength="200" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bank_name">Bank Name</label>
+            <input type="text" id="bank_name" name="bank_name" placeholder="e.g. Chase, Wells Fargo" maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label for="last4">Last 4 Digits</label>
+            <input type="text" id="last4" name="last4" placeholder="1234" maxlength="4" pattern="[0-9]{0,4}" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="account_type">Account Type *</label>
+          <select id="account_type" name="account_type">
+            {% for val, label in account_types %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Add Account</button>
+          <a href="{% url 'account_list' %}" class="btn-cancel">Cancel</a>
+        </div>
+      </form>
+    </div>
+{% endblock %}

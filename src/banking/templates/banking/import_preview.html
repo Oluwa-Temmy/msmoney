@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Preview Import{% endblock %}
+
+{% block header_badge %}Banking{% endblock %}
+
+{% block extra_styles %}
+<style>
+.btn-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: #475569; text-decoration: none; margin-bottom: 1.25rem; }
+    .btn-back:hover { color: #818cf8; }
+
+    .preview-
+    .preview-title { font-size: 1.05rem; font-weight: 700; color: #fff; }
+    .preview-meta { font-size: .82rem; color: #475569; margin-top: .2rem; }
+
+    .info-banner { background: rgba(129,140,248,.1); border: 1px solid rgba(129,140,248,.25); border-radius: 10px; padding: .75rem 1rem; font-size: .85rem; color: #818cf8; margin-bottom: 1.5rem; display: flex; align-items: center; gap: .5rem; }
+
+    .tx-wrap { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; white-space: nowrap; }
+    .tx-table td { padding: .6rem .75rem; font-size: .84rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: #16161f; }
+
+    .pill-credit { display: inline-block; font-size: .62rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; background: rgba(52,211,153,.12); color: #34d399; }
+    .pill-debit  { display: inline-block; font-size: .62rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; background: rgba(248,113,113,.12); color: #f87171; }
+    .amt-credit { color: #34d399; font-weight: 600; }
+    .amt-debit  { color: #f87171; font-weight: 600; }
+
+    .overflow-note { font-size: .78rem; color: #475569; text-align: center; padding: .75rem; background: #1a1a24; border-top: 1px solid #2d2d3d; }
+
+    .confirm-actions { display: flex; align-items: center; gap: .75rem; }
+    .btn-confirm { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .65rem 1.5rem; font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-confirm:hover { background: #4f46e5; }
+    .btn-cancel { display: inline-flex; align-items: center; background: transparent; border: 1px solid #2d2d3d; color: #64748b; border-radius: 8px; padding: .65rem 1.25rem; font-size: .9rem; font-weight: 600; text-decoration: none; transition: background .15s, color .15s; }
+    .btn-cancel:hover { background: #20202e; color: #e2e8f0; }
+    .skipped-note { font-size: .78rem; color: #475569; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <a href="{% url 'import_statement' account.id %}" class="btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Back to Upload
+    </a>
+
+    <div class="preview-header">
+      <div>
+        <p class="preview-title">Preview — {{ account.name }}</p>
+        <p class="preview-meta">{{ total }} transaction(s) ready to import{% if skipped %} &middot; {{ skipped }} row(s) skipped{% endif %}</p>
+      </div>
+      <form method="post" action="{% url 'import_confirm' account.id %}">
+        {% csrf_token %}
+        <div class="confirm-actions">
+          {% if skipped %}
+          <span class="skipped-note">{{ skipped }} skipped (bad date/amount)</span>
+          {% endif %}
+          <a href="{% url 'account_detail' account.id %}" class="btn-cancel">Cancel</a>
+          <button type="submit" class="btn-confirm">Import {{ total }} Transaction{{ total|pluralize }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Review the rows below. Click "Import" to save them all to {{ account.name }}.
+      {% if total > 200 %} Only the first 200 are shown in the preview.{% endif %}
+    </div>
+
+    <div class="tx-wrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th style="text-align:right;">Amount</th>
+            <th style="text-align:right;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td style="color:#334155; font-size:.78rem;">{{ forloop.counter }}</td>
+            <td style="white-space:nowrap; color:#64748b;">{{ row.date }}</td>
+            <td>{{ row.description }}</td>
+            <td><span class="pill-{{ row.type }}">{{ row.type }}</span></td>
+            <td style="text-align:right;" class="amt-{{ row.type }}">
+              {% if row.type == 'credit' %}+{% else %}-{% endif %}${{ row.amount }}
+            </td>
+            <td style="text-align:right; color:#475569; font-size:.82rem;">
+              {% if row.balance_after %}${{ row.balance_after }}{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if total > 200 %}
+      <div class="overflow-note">Showing first 200 of {{ total }} rows. All {{ total }} will be imported.</div>
+      {% endif %}
+    </div>
+{% endblock %}

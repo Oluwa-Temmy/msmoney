@@ -1,0 +1,344 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Stores{% endblock %}
+
+{% block header_badge %}Stores{% endblock %}
+
+{% block extra_styles %}
+<style>
+.page-
+    .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .btn-add { display: inline-flex; align-items: center; gap: .4rem; background: #6366f1; color: #fff; text-decoration: none; border-radius: 8px; padding: .5rem 1rem; font-size: .85rem; font-weight: 600; transition: background .15s; }
+    .btn-add:hover { background: #4f46e5; }
+
+    .section-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: .75rem; }
+
+    /* ── Group block ── */
+    .group-block { background: #1a1a24; border: 1px solid #3730a3; border-radius: 14px; margin-bottom: 1.5rem; overflow: hidden; }
+
+    .group-
+
+    .group-header-left { display: flex; align-items: center; gap: .6rem; }
+    .group-icon { color: #818cf8; flex-shrink: 0; }
+    .group-icon svg { width: 18px; height: 18px; }
+    .group-name { font-size: 1rem; font-weight: 700; color: #fff; }
+    .group-store-count { font-size: .68rem; color: #818cf8; background: rgba(99,102,241,0.15); padding: .15rem .5rem; border-radius: 999px; font-weight: 600; }
+
+    .group-stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    .g-stat { display: flex; flex-direction: column; gap: .1rem; }
+    .g-stat .gs-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; }
+    .g-stat .gs-val { font-size: .95rem; font-weight: 700; }
+    .gs-val.p-pos { color: #34d399; }
+    .gs-val.p-neg { color: #f87171; }
+    .gs-val.income { color: #34d399; }
+    .gs-val.expense { color: #f87171; }
+    .gs-val.count { color: #818cf8; }
+
+    .group-actions { display: flex; align-items: center; gap: .5rem; }
+    .action-btn { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; text-decoration: none; padding: .3rem .7rem; border-radius: 6px; transition: background .15s, color .15s; background: transparent; border: 1px solid #2d2d3d; color: #64748b; cursor: pointer; }
+    .action-btn:hover { background: #20202e; color: #e2e8f0; }
+    .action-btn svg { width: 12px; height: 12px; }
+
+    /* ── Store rows inside group ── */
+    .store-rows { display: flex; flex-direction: column; }
+
+    .store-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: .85rem 1.25rem; border-bottom: 1px solid #1e1e2c;
+      flex-wrap: wrap; position: relative;
+    }
+    .store-row:last-child { border-bottom: none; }
+    .store-row:hover { background: #16161f; }
+
+    .store-row-name { min-width: 160px; }
+    .store-row-name .s-name { font-size: .9rem; font-weight: 600; color: #e2e8f0; text-decoration: none; }
+    .store-row-name .s-name:hover { color: #818cf8; text-decoration: underline; }
+    .store-row-name .s-platform { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #818cf8; margin-top: .1rem; }
+
+    .store-row-stats { display: flex; gap: 1.25rem; flex: 1; flex-wrap: wrap; }
+
+    .rs { display: flex; flex-direction: column; gap: .05rem; }
+    .rs .rs-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; }
+    .rs .rs-val { font-size: .82rem; font-weight: 600; }
+
+    .store-row-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; position: relative; }
+
+    /* ── Standalone store card ── */
+    .standalone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+    .store-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.25rem; position: relative; }
+    .store-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .6rem; }
+    .sc-platform { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #818cf8; font-weight: 600; }
+    .sc-name { font-size: .95rem; font-weight: 700; color: #fff; margin-top: .2rem; text-decoration: none; display: block; }
+    .sc-name:hover { color: #818cf8; text-decoration: underline; }
+    .sc-desc { font-size: .82rem; color: #64748b; line-height: 1.5; margin-bottom: .5rem; }
+    .sc-url a { font-size: .78rem; color: #6366f1; text-decoration: none; word-break: break-all; }
+    .sc-url a:hover { text-decoration: underline; }
+    .sc-stats { display: flex; gap: 1rem; margin: .6rem 0; flex-wrap: wrap; }
+
+    .status-pill { display: inline-block; font-size: .65rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .06em; }
+    .status-pill.active   { background: rgba(52,211,153,.15); color: #34d399; }
+    .status-pill.inactive { background: rgba(100,116,139,.15); color: #64748b; }
+
+    /* ── Dropdown ── */
+    .more-btn { background: none; border: none; color: #475569; cursor: pointer; padding: .2rem .4rem; border-radius: 6px; font-size: 1.2rem; letter-spacing: .05em; line-height: 1; transition: background .15s, color .15s; flex-shrink: 0; }
+    .more-btn:hover { background: #20202e; color: #e2e8f0; }
+
+    .more-menu { display: none; position: absolute; top: 100%; right: 0; background: #1e1e2c; border: 1px solid #2d2d3d; border-radius: 8px; overflow: hidden; z-index: 20; min-width: 175px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+    .more-menu.open { display: block; }
+    .more-menu a { display: flex; align-items: center; gap: .5rem; padding: .6rem 1rem; font-size: .83rem; color: #94a3b8; text-decoration: none; transition: background .12s, color .12s; white-space: nowrap; }
+    .more-menu a:hover { background: #20202e; color: #e2e8f0; }
+    .more-menu a.danger { color: #f87171; }
+    .more-menu a.danger:hover { background: rgba(248,113,113,.1); }
+    .more-menu .divider { border-top: 1px solid #2d2d3d; margin: .25rem 0; }
+    .more-menu svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .empty { text-align: center; padding: 4rem 2rem; color: #475569; font-size: .9rem; }
+    .empty a { color: #6366f1; text-decoration: none; }
+
+    /* ── Charts ── */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem; }
+    @media (max-width: 820px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-wrap { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .chart-wrap-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: 1rem; }
+    .chart-wrap canvas { max-height: 210px; }
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+      <p class="page-title">Stores &amp; Businesses</p>
+      <a href="{% url 'add_store' %}" class="btn-add">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add Store
+      </a>
+    </div>
+
+    {% if not group_data and not ungrouped_stores %}
+    <div class="empty">No stores yet. <a href="{% url 'add_store' %}">Add your first store</a></div>
+    {% endif %}
+
+    <!-- ── Charts ── -->
+    {% if chart_stores or chart_groups %}
+    <div class="charts-row">
+      {% if chart_groups %}
+      <div class="chart-wrap">
+        <p class="chart-wrap-title">Income &amp; Expenses by Group</p>
+        <canvas id="chartGroupsBars"></canvas>
+      </div>
+      {% endif %}
+      <div class="chart-wrap">
+        <p class="chart-wrap-title">Net Profit by Store</p>
+        <canvas id="chartStoresProfit"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Groups ── -->
+    {% for gd in group_data %}
+    <div class="group-block">
+      <div class="group-header">
+        <div class="group-header-left">
+          <span class="group-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </span>
+          <span class="group-name">{{ gd.group.name }}</span>
+          <span class="group-store-count">{{ gd.stores|length }} store{{ gd.stores|length|pluralize }}</span>
+        </div>
+
+        <div class="group-stats">
+          <div class="g-stat">
+            <span class="gs-label">Net Profit</span>
+            <span class="gs-val {% if gd.profit >= 0 %}p-pos{% else %}p-neg{% endif %}">{% if gd.profit >= 0 %}+{% endif %}${{ gd.profit|floatformat:2 }}</span>
+          </div>
+          <div class="g-stat">
+            <span class="gs-label">Income</span>
+            <span class="gs-val income">+${{ gd.income|floatformat:2 }}</span>
+          </div>
+          <div class="g-stat">
+            <span class="gs-label">Expenses</span>
+            <span class="gs-val expense">-${{ gd.expenses|floatformat:2 }}</span>
+          </div>
+          <div class="g-stat">
+            <span class="gs-label">Transactions</span>
+            <span class="gs-val count">{{ gd.tx_count }}</span>
+          </div>
+        </div>
+
+        <div class="group-actions">
+          <a href="{% url 'rename_group' gd.group.id %}" class="action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Rename
+          </a>
+        </div>
+      </div>
+
+      <div class="store-rows">
+        {% for store in gd.stores %}
+        <div class="store-row">
+          <div class="store-row-name">
+            <a class="s-name" href="{% url 'store_detail' store.id %}">{{ store.name }}</a>
+            <div class="s-platform">{{ store.get_platform_display }}</div>
+          </div>
+          <div class="store-row-stats">
+            <div class="rs">
+              <span class="rs-label">Profit</span>
+              <span class="rs-val {% if store.stat_profit >= 0 %}p-pos{% else %}p-neg{% endif %}">{% if store.stat_profit >= 0 %}+{% endif %}${{ store.stat_profit|floatformat:2 }}</span>
+            </div>
+            <div class="rs">
+              <span class="rs-label">Income</span>
+              <span class="rs-val income">+${{ store.stat_income|floatformat:2 }}</span>
+            </div>
+            <div class="rs">
+              <span class="rs-label">Expenses</span>
+              <span class="rs-val expense">-${{ store.stat_expenses|floatformat:2 }}</span>
+            </div>
+            <div class="rs">
+              <span class="rs-label">Tx</span>
+              <span class="rs-val count">{{ store.stat_tx_count }}</span>
+            </div>
+          </div>
+          <span class="status-pill {% if store.active %}active{% else %}inactive{% endif %}" style="flex-shrink:0">
+            {% if store.active %}Active{% else %}Inactive{% endif %}
+          </span>
+          <div class="store-row-actions">
+            <button class="more-btn" onclick="toggleMenu(event,'rm-{{ store.id }}')" title="More">&#8943;</button>
+            <div class="more-menu" id="rm-{{ store.id }}">
+              <a href="{% url 'group_store' store.id %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                Move to group…
+              </a>
+              <a href="{% url 'ungroup_store' store.id %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6h12a6 6 0 00-6-6z"/></svg>
+                Remove from group
+              </a>
+              <div class="divider"></div>
+              <a href="{% url 'delete_store' store.id %}" class="danger">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Delete
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- ── Standalone stores ── -->
+    {% if ungrouped_stores %}
+    {% if group_data %}<p class="section-label" style="margin-top:2rem;margin-bottom:.75rem;">Standalone Stores</p>{% endif %}
+    <div class="standalone-grid">
+      {% for store in ungrouped_stores %}
+      <div class="store-card">
+        <div class="store-card-top">
+          <div>
+            <div class="sc-platform">{{ store.get_platform_display }}</div>
+            <a class="sc-name" href="{% url 'store_detail' store.id %}">{{ store.name }}</a>
+          </div>
+          <div style="position:relative;">
+            <button class="more-btn" onclick="toggleMenu(event,'sm-{{ store.id }}')" title="More">&#8943;</button>
+            <div class="more-menu" id="sm-{{ store.id }}">
+              <a href="{% url 'group_store' store.id %}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                Group with…
+              </a>
+              <div class="divider"></div>
+              <a href="{% url 'delete_store' store.id %}" class="danger">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Delete
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {% if store.description %}<div class="sc-desc">{{ store.description }}</div>{% endif %}
+        {% if store.url %}<div class="sc-url"><a href="{{ store.url }}" target="_blank" rel="noopener">{{ store.url }}</a></div>{% endif %}
+
+        <div class="sc-stats">
+          <div class="rs">
+            <span class="rs-label">Profit</span>
+            <span class="rs-val {% if store.stat_profit >= 0 %}p-pos{% else %}p-neg{% endif %}">{% if store.stat_profit >= 0 %}+{% endif %}${{ store.stat_profit|floatformat:2 }}</span>
+          </div>
+          <div class="rs">
+            <span class="rs-label">Income</span>
+            <span class="rs-val income">+${{ store.stat_income|floatformat:2 }}</span>
+          </div>
+          <div class="rs">
+            <span class="rs-label">Expenses</span>
+            <span class="rs-val expense">-${{ store.stat_expenses|floatformat:2 }}</span>
+          </div>
+          <div class="rs">
+            <span class="rs-label">Tx</span>
+            <span class="rs-val count">{{ store.stat_tx_count }}</span>
+          </div>
+        </div>
+
+        <span class="status-pill {% if store.active %}active{% else %}inactive{% endif %}">
+          {% if store.active %}Active{% else %}Inactive{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function(){
+  const GRID='rgba(45,45,61,0.6)', TICK='#475569';
+  const GREEN='#34d399', RED='#f87171', INDIGO='#818cf8';
+  const GREEN_A='rgba(52,211,153,0.15)', RED_A='rgba(248,113,113,0.15)';
+  Chart.defaults.color = TICK;
+
+  {% if chart_groups %}
+  (function(){
+    const g = {{ chart_groups|safe }};
+    if (!g.labels.length) return;
+    new Chart(document.getElementById('chartGroupsBars'), {
+      type: 'bar',
+      data: { labels: g.labels, datasets: [
+        { label:'Income',   data: g.income,   backgroundColor: GREEN_A, borderColor: GREEN, borderWidth: 1.5, borderRadius: 3 },
+        { label:'Expenses', data: g.expenses, backgroundColor: RED_A,   borderColor: RED,   borderWidth: 1.5, borderRadius: 3 },
+      ]},
+      options: { responsive:true, interaction:{mode:'index',intersect:false},
+        scales:{ x:{grid:{color:GRID},ticks:{color:TICK}}, y:{grid:{color:GRID},ticks:{color:TICK,callback:v=>'$'+v}} } }
+    });
+  })();
+  {% endif %}
+
+  {% if chart_stores %}
+  (function(){
+    const s = {{ chart_stores|safe }};
+    if (!s.labels.length) return;
+    const colors = s.profit.map(v => v >= 0 ? GREEN : RED);
+    new Chart(document.getElementById('chartStoresProfit'), {
+      type: 'bar',
+      data: { labels: s.labels, datasets: [
+        { label:'Net Profit', data: s.profit, backgroundColor: colors, borderWidth: 0, borderRadius: 4 }
+      ]},
+      options: { indexAxis:'y', responsive:true,
+        scales:{ x:{grid:{color:GRID},ticks:{color:TICK,callback:v=>'$'+v}}, y:{grid:{color:GRID},ticks:{color:TICK,font:{size:11}}} } }
+    });
+  })();
+  {% endif %}
+})();
+
+  function toggleMenu(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById(id);
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.more-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.more-menu.open').forEach(m => m.classList.remove('open'));
+  });
+</script>
+{% endblock %}

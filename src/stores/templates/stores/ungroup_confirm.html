@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Remove from Group{% endblock %}
+
+{% block header_badge %}Stores{% endblock %}
+
+{% block extra_styles %}
+<style>
+.card{background:#1a1a24;border:1px solid #2d2d3d;border-radius:12px;padding:2rem;max-width:480px}
+    .card h2{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:.5rem}
+    .card p{font-size:.875rem;color:#64748b;line-height:1.6;margin-bottom:1.5rem}
+    .actions{display:flex;gap:.75rem}
+    .btn-confirm{background:#f59e0b;color:#000;border:none;border-radius:8px;padding:.65rem 1.5rem;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s}
+    .btn-confirm:hover{background:#d97706}
+    .btn-cancel{background:transparent;color:#64748b;border:1px solid #2d2d3d;border-radius:8px;padding:.65rem 1.25rem;font-size:.9rem;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s,color .15s}
+    .btn-cancel:hover{background:#20202e;color:#e2e8f0}
+</style>
+{% endblock %}
+
+{% block content %}
+
+      <div class="card">
+        <h2>Remove from group?</h2>
+        <p>
+          Remove <strong style="color:#e2e8f0">{{ store.name }}</strong> from the group
+          <strong style="color:#e2e8f0">{{ store.group.name }}</strong>?
+          The store will become standalone. If it's the last store in the group, the group will be deleted.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="actions">
+            <button type="submit" class="btn-confirm">Remove from Group</button>
+            <a href="{% url 'store_list' %}" class="btn-cancel">Cancel</a>
+          </div>
+        </form>
+      </div>
+{% endblock %}

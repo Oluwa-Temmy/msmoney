@@ -1,0 +1,190 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — {{ store.name }} Vendors{% endblock %}
+
+{% block header_badge %}Vendors{% endblock %}
+
+{% block extra_styles %}
+<style>
+.btn-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: #475569; text-decoration: none; margin-bottom: 1.25rem; }
+    .btn-back:hover { color: #818cf8; }
+
+    /* ── Header ── */
+    .page-
+    .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .page-subtitle { font-size: .82rem; color: #475569; margin-top: .2rem; }
+
+    /* ── Add form ── */
+    .add-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem; }
+    .add-card-title { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: 1rem; }
+    .form-row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; flex: 1; min-width: 140px; }
+    .form-group label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 600; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px;
+      color: #e2e8f0; padding: .55rem .75rem; font-size: .87rem; outline: none; transition: border-color .15s; width: 100%;
+    }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #6366f1; }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: #334155; }
+    .form-group select option { background: #1a1a24; }
+    .form-hint { font-size: .7rem; color: #334155; margin-top: .2rem; }
+    .btn-add { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .58rem 1.1rem; font-size: .87rem; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; flex-shrink: 0; height: fit-content; align-self: flex-end; }
+    .btn-add:hover { background: #4f46e5; }
+
+    /* ── Vendor cards ── */
+    .vendors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .vendor-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.1rem 1.25rem; position: relative; }
+
+    .vc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .5rem; }
+    .vc-category { font-size: .63rem; text-transform: uppercase; letter-spacing: .07em; color: #818cf8; font-weight: 700; }
+    .vc-name { font-size: .97rem; font-weight: 700; color: #fff; margin-bottom: .15rem; }
+    .vc-fee { font-size: .78rem; color: #475569; margin-bottom: .6rem; }
+    .vc-fee span { color: #64748b; }
+    .vc-url { font-size: .75rem; margin-bottom: .5rem; }
+    .vc-url a { color: #6366f1; text-decoration: none; word-break: break-all; }
+    .vc-url a:hover { text-decoration: underline; }
+    .vc-notes { font-size: .78rem; color: #475569; line-height: 1.5; margin-bottom: .75rem; }
+
+    .vc-stats { display: flex; gap: 1rem; padding-top: .65rem; border-top: 1px solid #1e1e2c; }
+    .vs { display: flex; flex-direction: column; gap: .05rem; }
+    .vs-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; }
+    .vs-val { font-size: .88rem; font-weight: 700; color: #f87171; }
+    .vs-val.count { color: #818cf8; }
+
+    .delete-btn { background: none; border: none; cursor: pointer; color: #334155; padding: .25rem; border-radius: 6px; transition: color .15s, background .15s; flex-shrink: 0; }
+    .delete-btn:hover { color: #f87171; background: rgba(248,113,113,.1); }
+    .delete-btn svg { width: 14px; height: 14px; display: block; }
+
+    .empty { text-align: center; padding: 4rem 2rem; color: #475569; font-size: .9rem; }
+
+    /* ── Category pill colors ── */
+    .cat-supplier    { color: #34d399; }
+    .cat-shipping    { color: #60a5fa; }
+    .cat-platform    { color: #a78bfa; }
+    .cat-payment     { color: #f59e0b; }
+    .cat-advertising { color: #f87171; }
+    .cat-software    { color: #38bdf8; }
+    .cat-returns     { color: #fb923c; }
+    .cat-warehouse   { color: #a3e635; }
+    .cat-other       { color: #818cf8; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <a href="{% url 'store_detail' store.id %}" class="btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      {{ store.name }}
+    </a>
+
+    <div class="page-header">
+      <div>
+        <p class="page-title">Vendors &amp; Third Parties</p>
+        <p class="page-subtitle">{{ store.name }} &mdash; {{ vendors|length }} vendor{{ vendors|length|pluralize }}</p>
+      </div>
+    </div>
+
+    <!-- ── Add Vendor Form ── -->
+    <div class="add-card">
+      <p class="add-card-title">Add Vendor / Third Party</p>
+      <form method="post" action="{% url 'add_vendor' store.id %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group" style="flex:2; min-width:180px;">
+            <label for="name">Vendor Name *</label>
+            <input type="text" id="name" name="name" placeholder="e.g. UPS, Stripe, Meta Ads" required maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+              {% for val, label in vendor_categories %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fee_type">Fee Type</label>
+            <select id="fee_type" name="fee_type">
+              {% for val, label in fee_types %}
+              <option value="{{ val }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="min-width:110px; max-width:140px;">
+            <label for="fee_value">Fee Amount / %</label>
+            <input type="number" id="fee_value" name="fee_value" placeholder="e.g. 15" step="0.0001" min="0" />
+            <span class="form-hint">Leave blank if unknown</span>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:.65rem;">
+          <div class="form-group" style="flex:2;">
+            <label for="website">Website (optional)</label>
+            <input type="url" id="website" name="website" placeholder="https://..." />
+          </div>
+          <div class="form-group" style="flex:3;">
+            <label for="notes">Notes (optional)</label>
+            <input type="text" id="notes" name="notes" placeholder="e.g. 15% referral fee on all sales" maxlength="500" />
+          </div>
+          <button type="submit" class="btn-add">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:.3rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Add Vendor
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Vendor Cards ── -->
+    {% if vendors %}
+    <div class="vendors-grid">
+      {% for v in vendors %}
+      <div class="vendor-card">
+        <div class="vc-top">
+          <span class="vc-category cat-{{ v.category }}">{{ v.get_category_display }}</span>
+          <form method="post" action="{% url 'delete_vendor' store.id v.id %}">
+            {% csrf_token %}
+            <button type="submit" class="delete-btn" title="Remove vendor" onclick="return confirm('Remove {{ v.name }}?')">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </form>
+        </div>
+        <p class="vc-name">{{ v.name }}</p>
+        <p class="vc-fee">
+          {{ v.get_fee_type_display }}
+          {% if v.fee_value %}
+            &middot; <span>
+              {% if v.fee_type == 'percentage' %}{{ v.fee_value }}%
+              {% else %}${{ v.fee_value }}
+              {% endif %}
+            </span>
+          {% endif %}
+        </p>
+        {% if v.website %}
+        <p class="vc-url"><a href="{{ v.website }}" target="_blank" rel="noopener">{{ v.website }}</a></p>
+        {% endif %}
+        {% if v.notes %}
+        <p class="vc-notes">{{ v.notes }}</p>
+        {% endif %}
+        <div class="vc-stats">
+          <div class="vs">
+            <span class="vs-label">Linked Expense</span>
+            <span class="vs-val">-${{ v.stat_total|floatformat:2 }}</span>
+          </div>
+          <div class="vs">
+            <span class="vs-label">Transactions</span>
+            <span class="vs-val count">{{ v.stat_tx_count }}</span>
+          </div>
+          <div class="vs" style="margin-left:auto;align-self:flex-end;">
+            <a href="{% url 'vendor_manage' store.id v.id %}" style="font-size:.72rem;color:#6366f1;text-decoration:none;display:inline-flex;align-items:center;gap:.25rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Manage
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">No vendors yet. Add suppliers, shipping carriers, platform fees, and other third parties above.</div>
+    {% endif %}
+{% endblock %}

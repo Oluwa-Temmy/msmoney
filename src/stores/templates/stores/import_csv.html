@@ -1,0 +1,243 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Import CSV{% endblock %}
+
+{% block header_badge %}Stores{% endblock %}
+
+{% block extra_styles %}
+<style>
+.breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: #475569; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: #6366f1; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb svg { width: 12px; height: 12px; }
+
+    .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+
+    /* ── Upload card ── */
+    .upload-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 2rem; max-width: 520px; }
+    .upload-card p { font-size: .85rem; color: #64748b; line-height: 1.6; margin-bottom: 1.25rem; }
+    .upload-card ul { margin: .5rem 0 1rem 1.25rem; font-size: .82rem; color: #64748b; line-height: 1.8; }
+
+    .file-input-wrap { display: flex; flex-direction: column; gap: .75rem; }
+    .file-label { font-size: .8rem; color: #94a3b8; font-weight: 500; }
+    input[type="file"] { font-size: .85rem; color: #94a3b8; background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px; padding: .5rem .75rem; cursor: pointer; width: 100%; }
+    input[type="file"]::file-selector-button { background: #6366f1; color: #fff; border: none; padding: .35rem .75rem; border-radius: 6px; font-size: .8rem; font-weight: 600; cursor: pointer; margin-right: .75rem; }
+    input[type="file"]::file-selector-button:hover { background: #4f46e5; }
+
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.1rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; border: none; transition: background .15s; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary { background: #1e1e2c; color: #94a3b8; border: 1px solid #2d2d3d; text-decoration: none; }
+    .btn-secondary:hover { background: #20202e; color: #e2e8f0; }
+
+    /* ── Preview ── */
+    .preview-
+    .preview-title { font-size: 1rem; font-weight: 700; color: #fff; }
+    .preview-meta { font-size: .82rem; color: #64748b; }
+    .preview-meta strong { color: #818cf8; }
+
+    .summary-bar { display: flex; gap: 1.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .sum-item { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 10px; padding: .6rem 1rem; }
+    .sum-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; margin-bottom: .2rem; }
+    .sum-val { font-size: 1rem; font-weight: 700; }
+    .sum-val.pos { color: #34d399; }
+    .sum-val.neg { color: #f87171; }
+    .sum-val.neutral { color: #818cf8; }
+
+    .preview-actions { display: flex; gap: .75rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+
+    .tx-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    .tx-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; white-space: nowrap; }
+    .tx-table td { padding: .6rem .75rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: #16161f; }
+    .tx-table tr.deselected td { opacity: .4; }
+
+    .type-pill { display: inline-block; font-size: .63rem; font-weight: 700; padding: .15rem .45rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    .type-pill.income  { background: rgba(52,211,153,.15); color: #34d399; }
+    .type-pill.expense { background: rgba(248,113,113,.15); color: #f87171; }
+
+    .amount-pos { color: #34d399; font-weight: 700; }
+    .amount-neg { color: #f87171; font-weight: 700; }
+
+    .sel-check { width: 15px; height: 15px; cursor: pointer; accent-color: #6366f1; }
+
+    .empty-warn { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 10px; padding: 2rem; text-align: center; color: #475569; font-size: .88rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="breadcrumb">
+      <a href="{% url 'store_list' %}">Stores</a>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      <a href="{% url 'store_detail' store.id %}">{{ store.name }}</a>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      Import CSV
+    </div>
+
+    {% if not preview %}
+    <!-- ── Step 1: Upload ── -->
+    <p class="page-title">Import Amazon Seller CSV — {{ store.name }}</p>
+    {% if import_error %}
+    <div style="background:#3f1f1f;border:1px solid #b91c1c;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:1rem;color:#fca5a5;font-size:.8rem;">
+      <strong>Import failed:</strong> {{ import_error }}
+    </div>
+    {% endif %}
+    <div class="upload-card">
+      <p>
+        Upload a transaction CSV exported from Amazon Seller Central.
+        Rows with a $0 total are skipped. You can deselect individual rows before confirming.
+      </p>
+      <ul>
+        <li>Order Payment → Income</li>
+        <li>Refund / Service Fees / Shipping → Expense</li>
+        <li>Rows with $0 total are ignored</li>
+      </ul>
+      <form method="post" enctype="multipart/form-data" class="file-input-wrap">
+        {% csrf_token %}
+        <label class="file-label">Select CSV file</label>
+        <input type="file" name="csv_file" accept=".csv,text/csv" required />
+        <div style="display:flex;gap:.75rem;margin-top:.25rem;">
+          <button type="submit" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            Preview Import
+          </button>
+          <a href="{% url 'store_detail' store.id %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    {% else %}
+    <!-- ── Step 2: Preview ── -->
+    {% if rows %}
+    <div class="preview-header">
+      <p class="preview-title">Preview — {{ store.name }}</p>
+      <span class="preview-meta"><strong>{{ rows|length }}</strong> row{{ rows|length|pluralize }} to import{% if skipped %}, <strong>{{ skipped }}</strong> skipped ($0 total){% endif %}</span>
+    </div>
+
+    <div class="summary-bar" id="summaryBar">
+      <div class="sum-item">
+        <div class="sum-label">Selected</div>
+        <div class="sum-val neutral" id="sumCount">{{ rows|length }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">Income</div>
+        <div class="sum-val pos" id="sumIncome">—</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">Expenses</div>
+        <div class="sum-val neg" id="sumExpenses">—</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">Net</div>
+        <div class="sum-val" id="sumNet">—</div>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1" />
+
+      <div class="preview-actions">
+        <button type="submit" class="btn btn-primary" id="importBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Import Selected
+        </button>
+        <a href="{% url 'import_amazon_csv' store.id %}" class="btn btn-secondary">← Re-upload</a>
+        <a href="{% url 'store_detail' store.id %}" class="btn btn-secondary">Cancel</a>
+        <span style="font-size:.78rem;color:#475569;margin-left:.25rem;">Uncheck rows you want to skip</span>
+      </div>
+
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selAll" checked class="sel-check" title="Select all" /></th>
+            <th>Date</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th style="text-align:right">Amount</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody">
+          {% for row in rows %}
+          <tr data-amount="{{ row.amount }}" data-type="{{ row.type }}">
+            <td><input type="checkbox" name="selected_indices" value="{{ forloop.index0 }}" checked class="sel-check row-check" /></td>
+            <td style="white-space:nowrap;color:#64748b">{{ row.date }}</td>
+            <td>{{ row.title }}</td>
+            <td style="color:#64748b">{{ row.category }}</td>
+            <td><span class="type-pill {{ row.type }}">{{ row.type }}</span></td>
+            <td style="text-align:right">
+              <span class="{% if row.type == 'income' %}amount-pos{% else %}amount-neg{% endif %}">
+                {% if row.type == 'income' %}+{% else %}-{% endif %}${{ row.amount }}
+              </span>
+            </td>
+            <td style="font-size:.75rem;color:#475569">{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
+
+    {% else %}
+    <div class="empty-warn">
+      No importable rows found in this CSV (all rows had $0 total, unparseable dates, or missing columns).<br><br>
+      {% if detected_headers %}
+      <span style="font-size:.78rem;color:#475569">Columns detected: <code style="color:#818cf8">{{ detected_headers|join:", " }}</code></span><br><br>
+      {% endif %}
+      <span style="font-size:.78rem;color:#475569">Expected a column named <code style="color:#818cf8">total</code> or <code style="color:#818cf8">total (usd)</code> and a date column (<code style="color:#818cf8">date</code> or <code style="color:#818cf8">date/time</code>).</span><br><br>
+      <a href="{% url 'import_amazon_csv' store.id %}" style="color:#6366f1;">Try a different file</a>
+    </div>
+    {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Select-all checkbox
+  const selAll = document.getElementById('selAll');
+  if (selAll) {
+    selAll.addEventListener('change', () => {
+      document.querySelectorAll('.row-check').forEach(cb => {
+        cb.checked = selAll.checked;
+        cb.closest('tr').classList.toggle('deselected', !selAll.checked);
+      });
+      updateSummary();
+    });
+    document.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        cb.closest('tr').classList.toggle('deselected', !cb.checked);
+        selAll.checked = [...document.querySelectorAll('.row-check')].every(c => c.checked);
+        updateSummary();
+      });
+    });
+  }
+
+  function updateSummary() {
+    let income = 0, expenses = 0, count = 0;
+    document.querySelectorAll('#previewBody tr').forEach(tr => {
+      const cb = tr.querySelector('.row-check');
+      if (!cb || !cb.checked) return;
+      count++;
+      const amt = parseFloat(tr.dataset.amount) || 0;
+      if (tr.dataset.type === 'income') income += amt;
+      else expenses += amt;
+    });
+    const net = income - expenses;
+    document.getElementById('sumCount').textContent = count;
+    document.getElementById('sumIncome').textContent = '+$' + income.toFixed(2);
+    document.getElementById('sumExpenses').textContent = '-$' + expenses.toFixed(2);
+    const netEl = document.getElementById('sumNet');
+    netEl.textContent = (net >= 0 ? '+' : '') + '$' + net.toFixed(2);
+    netEl.className = 'sum-val ' + (net >= 0 ? 'pos' : 'neg');
+
+    const btn = document.getElementById('importBtn');
+    if (btn) btn.textContent = count > 0 ? `Import ${count} Row${count !== 1 ? 's' : ''}` : 'Nothing Selected';
+  }
+
+  // Run once on load
+  if (document.getElementById('previewBody')) updateSummary();
+</script>
+{% endblock %}

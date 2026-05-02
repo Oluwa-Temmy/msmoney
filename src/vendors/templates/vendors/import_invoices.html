@@ -1,0 +1,417 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Import Invoices{% endblock %}
+
+{% block header_badge %}Vendors{% endblock %}
+
+{% block extra_styles %}
+<style>
+.preview-table { font-size: .8rem; }
+
+    /* ── Discovery step ── */
+    .disc-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 2rem; margin-bottom: 2rem; }
+    .disc-badge { display: inline-flex; align-items: center; gap: .4rem; background: #312e81; color: #a5b4fc; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .25rem .65rem; border-radius: 999px; margin-bottom: 1rem; }
+    .disc-heading { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: .4rem; }
+    .disc-sub { font-size: .85rem; color: #475569; margin-bottom: 1.5rem; }
+    .disc-stats { display: flex; gap: 1rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+    .ds-item { background: #13131a; border: 1px solid #2d2d3d; border-radius: 10px; padding: .75rem 1.25rem; min-width: 110px; }
+    .ds-val { font-size: 1.3rem; font-weight: 800; margin-bottom: .1rem; }
+    .ds-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; }
+    .ds-green { color: #34d399; } .ds-red { color: #f87171; } .ds-blue { color: #60a5fa; } .ds-muted { color: #64748b; }
+    .disc-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: .8rem; }
+    .disc-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #475569; padding: .45rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; }
+    .disc-table td { padding: .55rem .75rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .disc-table tr:last-child td { border-bottom: none; }
+    .disc-table tr:hover td { background: #16161f; }
+    .unmatched-note { font-size: .8rem; color: #475569; background: #13131a; border: 1px solid #2d2d3d; border-radius: 8px; padding: .75rem 1rem; margin-bottom: 1.5rem; }
+    .unmatched-note strong { color: #64748b; }
+
+    .btn-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: #475569; text-decoration: none; margin-bottom: 1.25rem; }
+    .btn-back:hover { color: #818cf8; }
+
+    .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: .25rem; }
+    .page-subtitle { font-size: .82rem; color: #475569; margin-bottom: 2rem; }
+
+    /* ── Upload card ── */
+    .upload-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 1.75rem 2rem; margin-bottom: 2rem; }
+    .upload-card h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: 1.25rem; }
+
+    .hint-box { background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: .78rem; color: #64748b; line-height: 1.7; }
+    .hint-box code { color: #818cf8; font-family: 'Fira Code', monospace; font-size: .78rem; }
+
+    .form-row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; flex: 1; min-width: 200px; }
+    .form-group label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 600; }
+    .form-group input[type="file"] { background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 8px; color: #94a3b8; padding: .55rem .75rem; font-size: .87rem; outline: none; cursor: pointer; }
+    .btn-upload { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .58rem 1.25rem; font-size: .87rem; font-weight: 600; cursor: pointer; transition: background .15s; white-space: nowrap; flex-shrink: 0; }
+    .btn-upload:hover { background: #4f46e5; }
+
+    /* ── Preview table ── */
+    .preview-
+    .preview-title { font-size: .9rem; font-weight: 700; color: #fff; }
+    .skipped-note { font-size: .75rem; color: #64748b; }
+
+    .preview-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    .preview-table th { font-size: .62rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; white-space: nowrap; }
+    .preview-table td { padding: .6rem .75rem; font-size: .83rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .preview-table tr:last-child td { border-bottom: none; }
+    .preview-table tr:hover td { background: #16161f; }
+
+    .preview-table input[type="checkbox"] { accent-color: #6366f1; width: 14px; height: 14px; cursor: pointer; }
+    .preview-table select { background: #0f0f13; border: 1px solid #2d2d3d; border-radius: 6px; color: #e2e8f0; padding: .3rem .5rem; font-size: .8rem; outline: none; }
+
+    .amount-neg { color: #f87171; font-weight: 700; }
+
+    .actions-row { display: flex; gap: .75rem; align-items: center; }
+    .btn-confirm { background: #6366f1; color: #fff; border: none; border-radius: 8px; padding: .58rem 1.25rem; font-size: .87rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-confirm:hover { background: #4f46e5; }
+    .btn-cancel { background: none; border: 1px solid #2d2d3d; color: #64748b; border-radius: 8px; padding: .55rem 1.1rem; font-size: .87rem; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-cancel:hover { border-color: #475569; color: #94a3b8; }
+
+    .empty { text-align: center; padding: 3rem; color: #475569; font-size: .88rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <a href="{% url 'store_detail' store.id %}" class="btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      {{ store.name }}
+    </a>
+
+    <p class="page-title">Import Vendor Invoices</p>
+    <p class="page-subtitle">{{ store.name }} &mdash; Upload a CSV to bulk-import vendor expenses</p>
+
+    {% if not preview and not discovery %}
+    <div class="upload-card">
+      <h3>Upload CSV</h3>
+      <div class="hint-box">
+        <strong style="color:#e2e8f0">Printify orders CSV</strong> is auto-detected and fully supported.<br>
+        Generic invoices also accepted — expected columns:<br>
+        <code>date</code> &nbsp;|&nbsp; <code>description</code> &nbsp;|&nbsp; <code>amount</code> &nbsp;|&nbsp;
+        <code>vendor</code> <em>(optional)</em> &nbsp;|&nbsp; <code>note</code><br><br>
+        Accepted date formats: <code>YYYY-MM-DD</code>, <code>MM/DD/YYYY</code>, <code>DD/MM/YYYY</code><br>
+        All amounts are imported as <strong>expenses</strong>.
+      </div>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group">
+            <label>CSV File</label>
+            <input type="file" name="csv_file" accept=".csv" required />
+          </div>
+          <button type="submit" class="btn-upload">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:.3rem"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+            Preview
+          </button>
+        </div>
+      </form>
+    </div>
+    {% endif %}{# /upload card #}
+
+    {% if discovery %}
+    <div class="disc-card">
+      <div class="disc-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        Association Discovery
+      </div>
+      {% if matched_count > 0 %}
+      <p class="disc-heading">We found {{ matched_count }} of {{ total_count }} orders matching existing Amazon transactions</p>
+      <p class="disc-sub">These Printify orders share order numbers with Amazon payments already imported into this store. They will be linked automatically.</p>
+      {% else %}
+      <p class="disc-heading">No matching Amazon transactions found yet</p>
+      <p class="disc-sub">{{ total_count }} Printify orders were parsed. Import the Amazon Seller CSV first to enable automatic revenue matching, or continue now and associate later.</p>
+      {% endif %}
+
+      <div class="disc-stats">
+        <div class="ds-item">
+          <div class="ds-val ds-blue">{{ total_count }}</div>
+          <div class="ds-label">Orders in CSV</div>
+        </div>
+        <div class="ds-item">
+          <div class="ds-val ds-green">{{ matched_count }}</div>
+          <div class="ds-label">Matched Amazon</div>
+        </div>
+        <div class="ds-item">
+          <div class="ds-val ds-muted">{{ unmatched_count }}</div>
+          <div class="ds-label">Not yet matched</div>
+        </div>
+        {% if matched_count > 0 %}
+        <div class="ds-item">
+          <div class="ds-val ds-green">+${{ total_revenue|floatformat:2 }}</div>
+          <div class="ds-label">Amazon Revenue</div>
+        </div>
+        <div class="ds-item">
+          <div class="ds-val ds-red">-${{ total_prod|floatformat:2 }}</div>
+          <div class="ds-label">Production Cost</div>
+        </div>
+        <div class="ds-item">
+          <div class="ds-val {% if total_net|floatformat:0 >= '0' %}ds-green{% else %}ds-red{% endif %}">
+            {% if total_net|floatformat:2 >= "0" %}+{% endif %}${{ total_net|floatformat:2 }}
+          </div>
+          <div class="ds-label">Est. Net (matched)</div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if matched_rows %}
+      <p style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:#475569;margin-bottom:.6rem;font-weight:700">Matched Orders</p>
+      <table class="disc-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th style="text-align:right">Amazon Revenue</th>
+            <th style="text-align:right">Amazon Fees</th>
+            <th style="text-align:right">Production Cost</th>
+            <th style="text-align:right;color:#34d399">Est. Net</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in matched_rows %}
+          <tr>
+            <td style="color:#818cf8;white-space:nowrap;font-size:.78rem">{{ row.order_id }}</td>
+            <td>{{ row.customer }}</td>
+            <td style="color:#64748b;white-space:nowrap">{{ row.date }}</td>
+            <td>
+              {% if row.status == 'fulfilled' %}<span style="color:#34d399;font-weight:700;font-size:.72rem">✓ fulfilled</span>
+              {% elif row.status == 'in-production' %}<span style="color:#f59e0b;font-weight:700;font-size:.72rem">⚙ in-production</span>
+              {% else %}<span style="color:#f87171;font-weight:700;font-size:.72rem">◉ {{ row.status }}</span>
+              {% endif %}
+            </td>
+            <td style="text-align:right;color:#34d399">+${{ row.amazon_revenue }}</td>
+            <td style="text-align:right;color:#f87171">{% if row.amazon_fees != '0' %}-${{ row.amazon_fees }}{% else %}&mdash;{% endif %}</td>
+            <td style="text-align:right;color:#f87171">-${{ row.amount }}</td>
+            <td style="text-align:right;font-weight:700">
+              {% if row.amazon_net|floatformat:2 >= "0" %}
+                <span style="color:#34d399">+${{ row.amazon_net|floatformat:2 }}</span>
+              {% else %}
+                <span style="color:#f87171">${{ row.amazon_net|floatformat:2 }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if unmatched_rows %}
+      <div class="unmatched-note">
+        <strong>{{ unmatched_count }} unmatched order{{ unmatched_count|pluralize }}:</strong>
+        {% for row in unmatched_rows %}{{ row.order_id }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        &mdash; these will be imported as expenses without Amazon revenue data.
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="discover_confirmed" value="1" />
+        <div class="actions-row">
+          <button type="submit" class="btn-confirm">
+            Continue to Import Preview &rarr;
+          </button>
+          <a href="{% url 'store_detail' store.id %}" class="btn-cancel">Cancel</a>
+        </div>
+      </form>
+    </div>
+    {% endif %}{# /discovery #}
+
+    {% if preview %}
+      {% if rows %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="1" />
+        <input type="hidden" name="row_count" value="{{ rows|length }}" />
+
+        <div class="preview-header">
+          <span class="preview-title">
+            {% if is_printify %}
+              <span style="background:#6366f1;color:#fff;font-size:.65rem;padding:.15rem .45rem;border-radius:4px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-right:.5rem">Printify</span>
+            {% endif %}
+            Preview — {{ rows|length }} order{{ rows|length|pluralize }}
+          </span>
+          {% if skipped %}<span class="skipped-note">{{ skipped }} row{{ skipped|pluralize }} skipped (missing date or amount)</span>{% endif %}
+        </div>
+
+        {% if is_printify %}
+
+        {# ── Matched orders: have Amazon revenue, included in calculations ── #}
+        {% if matched_rows %}
+        <div style="display:flex;gap:.75rem;margin-bottom:.9rem;flex-wrap:wrap">
+          <div class="ds-item"><div class="ds-val ds-green">{{ matched_rows|length }}</div><div class="ds-label">Matched Orders</div></div>
+          <div class="ds-item"><div class="ds-val ds-green">+${{ total_revenue|floatformat:2 }}</div><div class="ds-label">Amazon Revenue</div></div>
+          <div class="ds-item"><div class="ds-val ds-red">-${{ total_prod|floatformat:2 }}</div><div class="ds-label">Production Cost</div></div>
+          <div class="ds-item">
+            <div class="ds-val {% if total_net|floatformat:2 >= '0' %}ds-green{% else %}ds-red{% endif %}">
+              {% if total_net|floatformat:2 >= "0" %}+{% endif %}${{ total_net|floatformat:2 }}
+            </div>
+            <div class="ds-label">Est. Net</div>
+          </div>
+        </div>
+        <p style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#475569;font-weight:700;margin-bottom:.5rem">Matched Orders — included in calculations</p>
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>✓</th><th>Date</th><th>Order #</th><th>Customer</th>
+              <th>Product</th><th>Shipping</th><th>Carrier</th><th>Status</th>
+              <th style="text-align:right;color:#34d399">Amazon Revenue</th>
+              <th style="text-align:right;color:#f87171">Amazon Fees</th>
+              <th style="text-align:right">Net</th>
+              <th>Vendor</th><th style="text-align:right">Production Cost</th><th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in matched_rows %}
+            <tr>
+              <td><input type="checkbox" name="row_{{ row.row_idx }}_sel" checked /></td>
+              <td style="color:#64748b;white-space:nowrap">
+                {{ row.date }}
+                <input type="hidden" name="row_{{ row.row_idx }}_date"         value="{{ row.date }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_amount"       value="{{ row.amount }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_category"     value="{{ row.category }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_title"        value="{{ row.title }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_order_number" value="{{ row.order_number }}" />
+              </td>
+              <td style="color:#818cf8;white-space:nowrap;font-size:.78rem">{{ row.order_id }}</td>
+              <td style="white-space:nowrap">{{ row.customer }}</td>
+              <td style="color:#64748b;text-align:right">{% if row.product_cost %}-${{ row.product_cost|cut:" USD" }}{% endif %}</td>
+              <td style="color:#64748b;text-align:right">{% if row.ship_cost %}-${{ row.ship_cost|cut:" USD" }}{% endif %}</td>
+              <td style="color:#64748b;font-size:.78rem">{{ row.carrier }}</td>
+              <td>
+                {% if row.status == 'fulfilled' %}<span style="color:#34d399;font-size:.72rem;font-weight:700;text-transform:uppercase">✓ {{ row.status }}</span>
+                {% elif row.status == 'in-production' %}<span style="color:#f59e0b;font-size:.72rem;font-weight:700;text-transform:uppercase">⚙ {{ row.status }}</span>
+                {% else %}<span style="color:#f87171;font-size:.72rem;font-weight:700;text-transform:uppercase">◉ {{ row.status }}</span>{% endif %}
+              </td>
+              <td style="text-align:right;color:#34d399;font-weight:700">+${{ row.amazon_revenue }}</td>
+              <td style="text-align:right">
+                {% if row.amazon_fees != '0' %}<span style="color:#f87171">-${{ row.amazon_fees }}</span>{% else %}<span style="color:#334155">&mdash;</span>{% endif %}
+              </td>
+              <td style="text-align:right;font-weight:700">
+                {% if row.amazon_net|floatformat:2 >= "0" %}<span style="color:#34d399">+${{ row.amazon_net|floatformat:2 }}</span>
+                {% else %}<span style="color:#f87171">${{ row.amazon_net|floatformat:2 }}</span>{% endif %}
+              </td>
+              <td>
+                <select name="row_{{ row.row_idx }}_vendor_id">
+                  <option value="">— None —</option>
+                  {% for v in vendors %}<option value="{{ v.id }}" {% if v.id|stringformat:"s" == row.vendor_id|stringformat:"s" %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+                </select>
+              </td>
+              <td style="text-align:right"><span class="amount-neg">-${{ row.amount }}</span></td>
+              <td>
+                <input type="text" name="row_{{ row.row_idx }}_note" value="{{ row.note }}"
+                  style="background:#0f0f13;border:1px solid #2d2d3d;border-radius:6px;color:#64748b;padding:.3rem .5rem;font-size:.78rem;outline:none;width:100%;min-width:120px" />
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}{# /matched_rows #}
+
+        {# ── Unmatched orders: no Amazon revenue, excluded from calculations ── #}
+        {% if unmatched_rows %}
+        <div style="margin:1.75rem 0 .75rem;display:flex;align-items:center;gap:.75rem">
+          <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#475569;font-weight:700;white-space:nowrap">Unmatched Orders — {{ unmatched_rows|length }}</span>
+          <div style="flex:1;height:1px;background:#2d2d3d"></div>
+        </div>
+        <div style="background:#13131a;border:1px solid #2d2d3d;border-radius:8px;padding:.65rem 1rem;margin-bottom:.75rem;font-size:.8rem;color:#475569">
+          These orders have no matching Amazon revenue and are <strong style="color:#64748b">excluded from net / profit calculations</strong>. They will be saved as plain expenses.
+        </div>
+        <table class="preview-table" style="opacity:.75">
+          <thead>
+            <tr>
+              <th>✓</th><th>Date</th><th>Order #</th><th>Customer</th>
+              <th>Carrier</th><th>Status</th><th>Vendor</th>
+              <th style="text-align:right">Production Cost</th><th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in unmatched_rows %}
+            <tr>
+              <td><input type="checkbox" name="row_{{ row.row_idx }}_sel" checked /></td>
+              <td style="color:#64748b;white-space:nowrap">
+                {{ row.date }}
+                <input type="hidden" name="row_{{ row.row_idx }}_date"         value="{{ row.date }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_amount"       value="{{ row.amount }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_category"     value="{{ row.category }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_title"        value="{{ row.title }}" />
+                <input type="hidden" name="row_{{ row.row_idx }}_order_number" value="{{ row.order_number }}" />
+              </td>
+              <td style="color:#475569;white-space:nowrap;font-size:.78rem">{{ row.order_id }}</td>
+              <td style="color:#64748b;white-space:nowrap">{{ row.customer }}</td>
+              <td style="color:#64748b;font-size:.78rem">{{ row.carrier }}</td>
+              <td>
+                {% if row.status == 'fulfilled' %}<span style="color:#34d399;font-size:.72rem;font-weight:700;text-transform:uppercase">✓ {{ row.status }}</span>
+                {% elif row.status == 'in-production' %}<span style="color:#f59e0b;font-size:.72rem;font-weight:700;text-transform:uppercase">⚙ {{ row.status }}</span>
+                {% else %}<span style="color:#f87171;font-size:.72rem;font-weight:700;text-transform:uppercase">◉ {{ row.status }}</span>{% endif %}
+              </td>
+              <td>
+                <select name="row_{{ row.row_idx }}_vendor_id">
+                  <option value="">— None —</option>
+                  {% for v in vendors %}<option value="{{ v.id }}" {% if v.id|stringformat:"s" == row.vendor_id|stringformat:"s" %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+                </select>
+              </td>
+              <td style="text-align:right"><span class="amount-neg">-${{ row.amount }}</span></td>
+              <td>
+                <input type="text" name="row_{{ row.row_idx }}_note" value="{{ row.note }}"
+                  style="background:#0f0f13;border:1px solid #2d2d3d;border-radius:6px;color:#64748b;padding:.3rem .5rem;font-size:.78rem;outline:none;width:100%;min-width:120px" />
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}{# /unmatched_rows #}
+
+        {% else %}{# generic CSV #}
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>✓</th><th>Date</th><th>Description</th><th>Vendor</th>
+              <th style="text-align:right">Amount</th><th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td><input type="checkbox" name="row_{{ forloop.counter0 }}_sel" checked /></td>
+              <td style="color:#64748b;white-space:nowrap">
+                {{ row.date }}
+                <input type="hidden" name="row_{{ forloop.counter0 }}_date"         value="{{ row.date }}" />
+                <input type="hidden" name="row_{{ forloop.counter0 }}_amount"       value="{{ row.amount }}" />
+                <input type="hidden" name="row_{{ forloop.counter0 }}_category"     value="{{ row.category }}" />
+                <input type="hidden" name="row_{{ forloop.counter0 }}_title"        value="{{ row.title }}" />
+                <input type="hidden" name="row_{{ forloop.counter0 }}_order_number" value="{{ row.order_number }}" />
+              </td>
+              <td>
+                <input type="text" name="row_{{ forloop.counter0 }}_title_edit" value="{{ row.title }}"
+                  style="background:#0f0f13;border:1px solid #2d2d3d;border-radius:6px;color:#e2e8f0;padding:.3rem .5rem;font-size:.82rem;outline:none;width:100%;min-width:160px" />
+              </td>
+              <td>
+                <select name="row_{{ forloop.counter0 }}_vendor_id">
+                  <option value="">— None —</option>
+                  {% for v in vendors %}<option value="{{ v.id }}" {% if v.id|stringformat:"s" == row.vendor_id|stringformat:"s" %}selected{% endif %}>{{ v.name }}</option>{% endfor %}
+                </select>
+              </td>
+              <td style="text-align:right"><span class="amount-neg">-${{ row.amount }}</span></td>
+              <td>
+                <input type="text" name="row_{{ forloop.counter0 }}_note" value="{{ row.note }}"
+                  style="background:#0f0f13;border:1px solid #2d2d3d;border-radius:6px;color:#64748b;padding:.3rem .5rem;font-size:.78rem;outline:none;width:100%;min-width:120px" />
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}{# /is_printify #}
+
+        <div class="actions-row" style="margin-top:1rem">
+          <button type="submit" class="btn-confirm">Import Selected</button>
+          <a href="{% url 'store_detail' store.id %}" class="btn-cancel">Cancel</a>
+        </div>
+      </form>
+      {% else %}
+      <div class="empty">No valid rows found in the CSV. Check the format and try again.</div>
+      <a href="{% url 'import_vendor_invoices' store.id %}" class="btn-cancel" style="margin-top:1rem;display:inline-block">Try another file</a>
+      {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}MS Money{% endblock %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f13;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1a1a24;
+      border-bottom: 1px solid #2d2d3d;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+
+    header span.badge {
+      font-size: 0.7rem;
+      background: #6366f1;
+      color: #fff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .layout { display: flex; flex: 1; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: #1a1a24;
+      border-right: 1px solid #2d2d3d;
+      padding: 1.5rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .sidebar .nav-section {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #475569;
+      padding: 0 1.25rem;
+      margin: 0.75rem 0 0.4rem;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.55rem 1.25rem;
+      transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar a:hover { background: #20202e; color: #e2e8f0; }
+    .sidebar a.active { background: #20202e; color: #818cf8; border-left-color: #6366f1; }
+    .sidebar a svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+
+    /* ── Collapsible sidebar ── */
+    .sidebar { transition: width 0.25s ease; overflow: hidden; }
+    .sidebar-toggle {
+      display: flex;
+      justify-content: flex-end;
+      padding: .5rem .75rem .25rem;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle-btn {
+      background: none;
+      border: none;
+      color: #475569;
+      cursor: pointer;
+      padding: .3rem .4rem;
+      border-radius: 6px;
+      transition: background .15s, color .15s;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar-toggle-btn:hover { background: #20202e; color: #e2e8f0; }
+    .sidebar-toggle-btn svg { width: 14px; height: 14px; transition: transform .25s; }
+    .sidebar.collapsed { width: 64px; }
+    .sidebar.collapsed .sidebar-toggle { justify-content: center; }
+    .sidebar.collapsed .sidebar-toggle-btn svg { transform: scaleX(-1); }
+    .sidebar.collapsed .nav-section { display: none; }
+    .sidebar.collapsed .nav-label { display: none; }
+    .sidebar.collapsed a { justify-content: center; padding: .55rem 0; border-left-color: transparent !important; margin: 0 .5rem; border-radius: 8px; }
+    .sidebar.collapsed a.active { background: rgba(99,102,241,.15); }
+    .sidebar.collapsed .sidebar-profile { justify-content: center; padding: .75rem 0; }
+    .sidebar.collapsed .sidebar-user-info { display: none; }
+
+    .sidebar-profile {
+      margin-top: auto;
+      padding: .75rem 1.25rem;
+      border-top: 1px solid #2d2d3d;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .sidebar-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #6366f1;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .sidebar-user-info { min-width: 0; }
+
+    .sidebar-username {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-status {
+      display: block;
+      font-size: .65rem;
+      color: #475569;
+    }
+
+    main { flex: 1; padding: 2.5rem 2rem; max-width: 100%; overflow-x: auto; }
+  </style>
+  {% block extra_styles %}{% endblock %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <header>
+    <h1>MS Money</h1>
+    <span class="badge">{% block header_badge %}{% endblock %}</span>
+  </header>
+
+  <div class="layout">
+    {% include "base/sidebar.html" %}
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% block extra_scripts %}{% endblock %}
+
+  <script>
+  (function(){
+    var s = document.getElementById('appSidebar');
+    var b = document.getElementById('sidebarToggle');
+    if (!s || !b) return;
+    if (localStorage.getItem('sb') === '1') s.classList.add('collapsed');
+    b.addEventListener('click', function() {
+      s.classList.toggle('collapsed');
+      localStorage.setItem('sb', s.classList.contains('collapsed') ? '1' : '0');
+    });
+  })();
+  </script>
+
+</body>
+</html>

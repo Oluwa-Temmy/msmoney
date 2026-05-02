@@ -1,0 +1,113 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Vendors{% endblock %}
+
+{% block header_badge %}Vendors{% endblock %}
+
+{% block extra_styles %}
+<style>
+.page-
+    .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .page-subtitle { font-size: .82rem; color: #475569; margin-top: .2rem; }
+
+    /* ── Filter bar ── */
+    .filter-row { display: flex; gap: .6rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .filter-btn { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 8px; color: #64748b; font-size: .78rem; padding: .4rem .85rem; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+    .filter-btn:hover, .filter-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+    /* ── Vendor cards ── */
+    .store-section { margin-bottom: 2.5rem; }
+    .store-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: .75rem; font-weight: 700; border-bottom: 1px solid #1e1e2c; padding-bottom: .4rem; display: flex; align-items: center; gap: .5rem; }
+    .store-label a { color: #6366f1; text-decoration: none; font-size: .7rem; }
+    .store-label a:hover { text-decoration: underline; }
+
+    .vendors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .vendor-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.1rem 1.25rem; }
+
+    .vc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .5rem; }
+    .vc-category { font-size: .63rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; }
+    .vc-name { font-size: .97rem; font-weight: 700; color: #fff; margin-bottom: .15rem; }
+    .vc-store { font-size: .72rem; color: #475569; margin-bottom: .5rem; }
+    .vc-store a { color: #818cf8; text-decoration: none; }
+    .vc-store a:hover { text-decoration: underline; }
+    .vc-fee { font-size: .78rem; color: #475569; margin-bottom: .6rem; }
+    .vc-url { font-size: .75rem; margin-bottom: .5rem; }
+    .vc-url a { color: #6366f1; text-decoration: none; word-break: break-all; }
+    .vc-url a:hover { text-decoration: underline; }
+    .vc-notes { font-size: .78rem; color: #475569; line-height: 1.5; margin-bottom: .75rem; }
+
+    .vc-stats { display: flex; gap: 1rem; padding-top: .65rem; border-top: 1px solid #1e1e2c; }
+    .vs { display: flex; flex-direction: column; gap: .05rem; }
+    .vs-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; }
+    .vs-val { font-size: .88rem; font-weight: 700; color: #f87171; }
+    .vs-val.count { color: #818cf8; }
+
+    .empty { text-align: center; padding: 4rem 2rem; color: #475569; font-size: .9rem; }
+
+    /* ── Category colors ── */
+    .cat-supplier    { color: #34d399; }
+    .cat-shipping    { color: #60a5fa; }
+    .cat-platform    { color: #a78bfa; }
+    .cat-payment     { color: #f59e0b; }
+    .cat-advertising { color: #f87171; }
+    .cat-software    { color: #38bdf8; }
+    .cat-returns     { color: #fb923c; }
+    .cat-warehouse   { color: #a3e635; }
+    .cat-other       { color: #818cf8; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="page-header">
+      <div>
+        <p class="page-title">Vendors &amp; Third Parties</p>
+        <p class="page-subtitle">Invoices, fees, and costs from suppliers, platforms, and manufacturers across all your stores.</p>
+      </div>
+    </div>
+
+    {% if vendors %}
+      {% regroup vendors by store as store_groups %}
+      {% for group in store_groups %}
+      <div class="store-section">
+        <div class="store-label">
+          {{ group.grouper.name }}
+          <a href="{% url 'vendor_list' group.grouper.id %}">Manage →</a>
+        </div>
+        <div class="vendors-grid">
+          {% for v in group.list %}
+          <div class="vendor-card">
+            <div class="vc-top">
+              <span class="vc-category cat-{{ v.category }}">{{ v.get_category_display }}</span>
+            </div>
+            <div class="vc-name">{{ v.name }}</div>
+            {% if v.fee_type != 'variable' or v.fee_value %}
+            <div class="vc-fee">
+              Fee: {{ v.get_fee_type_display }}{% if v.fee_value %} — {{ v.fee_value }}{% endif %}
+            </div>
+            {% endif %}
+            {% if v.website %}
+            <div class="vc-url"><a href="{{ v.website }}" target="_blank" rel="noopener">{{ v.website }}</a></div>
+            {% endif %}
+            {% if v.notes %}
+            <div class="vc-notes">{{ v.notes }}</div>
+            {% endif %}
+            <div class="vc-stats">
+              <div class="vs">
+                <span class="vs-label">Total Spent</span>
+                <span class="vs-val">${{ v.stat_total|floatformat:2 }}</span>
+              </div>
+              <div class="vs">
+                <span class="vs-label">Transactions</span>
+                <span class="vs-val count">{{ v.stat_tx_count }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No vendors added yet. Go to a store and click <strong>Vendors</strong> to add your first one.</div>
+    {% endif %}
+{% endblock %}

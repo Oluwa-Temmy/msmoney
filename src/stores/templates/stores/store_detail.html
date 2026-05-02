@@ -1,0 +1,1085 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — {{ store.name }}{% endblock %}
+
+{% block header_badge %}Stores{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ── Two-column detail grid ── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    /* ── Vendor aside ── */
+    .vendor-aside { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.1rem 1.25rem; position: sticky; top: 1.5rem; }
+    .va-
+    .va-title { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; font-weight: 700; }
+    .va-actions { display: flex; gap: .4rem; }
+    .va-link { font-size: .68rem; color: #6366f1; text-decoration: none; white-space: nowrap; }
+    .va-link:hover { text-decoration: underline; }
+    .va-empty { font-size: .8rem; color: #334155; text-align: center; padding: 1rem 0; }
+    .vendor-item { padding: .65rem 0; border-bottom: 1px solid #1e1e2c; }
+    .vendor-item:last-child { border-bottom: none; }
+    .vi-name { font-size: .88rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
+    .vi-cat { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; margin-bottom: .2rem; }
+    .vi-row { font-size: .75rem; color: #475569; line-height: 1.6; }
+    .vi-row a { color: #6366f1; text-decoration: none; word-break: break-all; font-size: .72rem; }
+    .vi-row a:hover { text-decoration: underline; }
+    .vi-import-btn { display:inline-flex; align-items:center; gap:.3rem; margin-top:.55rem; font-size:.7rem; font-weight:600; color:#6366f1; background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.25); border-radius:5px; padding:.22rem .55rem; text-decoration:none; transition:background .15s,color .15s; }
+    .vi-import-btn:hover { background:rgba(99,102,241,.22); color:#818cf8; }
+    .cat-supplier { color: #34d399; } .cat-shipping { color: #60a5fa; } .cat-platform { color: #a78bfa; }
+    .cat-payment { color: #f59e0b; } .cat-advertising { color: #f87171; } .cat-software { color: #38bdf8; }
+    .cat-returns { color: #fb923c; } .cat-warehouse { color: #a3e635; } .cat-other { color: #818cf8; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: #475569; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: #6366f1; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb svg { width: 12px; height: 12px; }
+
+    /* ── Store header ── */
+    .store-hero { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+
+    .store-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+    .store-hero-info {}
+    .sh-platform { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #818cf8; font-weight: 600; margin-bottom: .3rem; }
+    .sh-name { font-size: 1.5rem; font-weight: 800; color: #fff; }
+    .sh-group { font-size: .78rem; color: #64748b; margin-top: .3rem; }
+    .sh-group a { color: #818cf8; text-decoration: none; }
+    .sh-group a:hover { text-decoration: underline; }
+    .sh-desc { font-size: .88rem; color: #64748b; line-height: 1.6; margin-top: .5rem; max-width: 520px; }
+    .sh-url { margin-top: .4rem; }
+    .sh-url a { font-size: .82rem; color: #6366f1; text-decoration: none; }
+    .sh-url a:hover { text-decoration: underline; }
+
+    .store-hero-badges { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
+
+    .status-pill { display: inline-block; font-size: .65rem; font-weight: 700; padding: .2rem .55rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+    .status-pill.active   { background: rgba(52,211,153,.15); color: #34d399; }
+    .status-pill.inactive { background: rgba(100,116,139,.15); color: #64748b; }
+
+    /* ── Stat cards ── */
+    .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+
+    .stat-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.1rem 1.25rem; }
+    .stat-card .sc-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: .4rem; }
+    .stat-card .sc-value { font-size: 1.5rem; font-weight: 800; }
+    .stat-card .sc-value.p-pos { color: #34d399; }
+    .stat-card .sc-value.p-neg { color: #f87171; }
+    .stat-card .sc-value.income  { color: #34d399; }
+    .stat-card .sc-value.expense { color: #f87171; }
+    .stat-card .sc-value.neutral { color: #818cf8; }
+
+    /* ── Transactions table ── */
+    .section-title { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .75rem; }
+
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; white-space: nowrap; }
+    .tx-table td { padding: .65rem .75rem; font-size: .85rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: #16161f; }
+    .tx-table tr.row-selected td { background: rgba(99,102,241,.08); }
+    .tx-table input[type=checkbox] { accent-color: #6366f1; width: 14px; height: 14px; cursor: pointer; }
+
+    /* bulk action bar */
+    .bulk-bar { position: sticky; bottom: 1.5rem; left: 0; right: 0; z-index: 50; display: none; background: #1e1e30; border: 1px solid #6366f1; border-radius: 12px; padding: .65rem 1rem; box-shadow: 0 8px 32px rgba(0,0,0,.5); align-items: center; gap: 1rem; margin-top: 1rem; }
+    .bulk-bar.visible { display: flex; }
+    .bulk-count { font-size: .85rem; font-weight: 700; color: #a5b4fc; white-space: nowrap; }
+    .bulk-spacer { flex: 1; }
+    .btn-bulk-delete { background: rgba(248,113,113,.15); border: 1px solid rgba(248,113,113,.4); color: #f87171; border-radius: 8px; padding: .4rem .9rem; font-size: .82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; transition: background .15s; }
+    .btn-bulk-delete:hover { background: rgba(248,113,113,.28); }
+    .btn-bulk-cancel { background: none; border: none; color: #475569; font-size: .82rem; cursor: pointer; padding: .4rem .6rem; }
+    .btn-bulk-cancel:hover { color: #94a3b8; }
+
+    .type-pill { display: inline-block; font-size: .65rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    .type-pill.income  { background: rgba(52,211,153,.15); color: #34d399; }
+    .type-pill.expense { background: rgba(248,113,113,.15); color: #f87171; }
+
+    .amount-pos { color: #34d399; font-weight: 700; }
+    .amount-neg { color: #f87171; font-weight: 700; }
+
+    /* ── Filter bar ── */
+    .tx-filters { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .9rem; }
+    .filter-btn { background: #13131a; border: 1px solid #2d2d3d; color: #64748b; border-radius: 6px; padding: .28rem .75rem; font-size: .75rem; font-weight: 600; cursor: pointer; transition: background .15s, color .15s, border-color .15s; white-space: nowrap; }
+    .filter-btn:hover { background: #1e1e2c; color: #94a3b8; }
+    .filter-btn.active { background: rgba(99,102,241,.15); border-color: rgba(99,102,241,.4); color: #818cf8; }
+    .filter-count { font-size: .7rem; color: #475569; margin-left: auto; }
+    .tx-search-wrap { display: flex; align-items: center; gap: .35rem; background: #13131a; border: 1px solid #2d2d3d; border-radius: 6px; padding: .22rem .55rem; transition: border-color .15s; }
+    .tx-search-wrap:focus-within { border-color: rgba(99,102,241,.4); }
+    .tx-search-wrap input { background: none; border: none; outline: none; color: #94a3b8; font-size: .78rem; width: 200px; }
+    .tx-search-wrap input::placeholder { color: #334155; }
+    .filter-sep { width: 1px; height: 18px; background: #2d2d3d; flex-shrink: 0; }
+    .date-filter-wrap { display: flex; align-items: center; gap: .35rem; }
+    .date-filter-wrap label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; white-space: nowrap; }
+    .date-filter-wrap input[type=date] { background: #13131a; border: 1px solid #2d2d3d; border-radius: 6px; color: #94a3b8; padding: .22rem .5rem; font-size: .75rem; outline: none; cursor: pointer; color-scheme: dark; }
+    .date-filter-wrap input[type=date]:focus { border-color: rgba(99,102,241,.4); }
+    .btn-date-clear { background: none; border: none; color: #334155; font-size: .85rem; cursor: pointer; padding: 0 .1rem; line-height: 1; transition: color .15s; }
+    .btn-date-clear:hover { color: #64748b; }
+    .filter-sep { width: 1px; height: 18px; background: #2d2d3d; flex-shrink: 0; }
+    .date-filter-wrap { display: flex; align-items: center; gap: .35rem; }
+    .date-filter-wrap label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: #475569; white-space: nowrap; }
+    .date-filter-wrap input[type=date] { background: #13131a; border: 1px solid #2d2d3d; border-radius: 6px; color: #94a3b8; padding: .22rem .5rem; font-size: .75rem; outline: none; cursor: pointer; color-scheme: dark; }
+    .date-filter-wrap input[type=date]:focus { border-color: rgba(99,102,241,.4); }
+    .btn-date-clear { background: none; border: none; color: #334155; font-size: .8rem; cursor: pointer; padding: 0 .2rem; line-height: 1; transition: color .15s; }
+    .btn-date-clear:hover { color: #64748b; }
+
+    .chart-toggle-btn { background: #13131a; border: 1px solid #2d2d3d; color: #64748b; border-radius: 6px; padding: .2rem .65rem; font-size: .7rem; font-weight: 600; cursor: pointer; transition: background .15s, color .15s, border-color .15s; white-space: nowrap; }
+    .chart-toggle-btn:hover { background: #1e1e2c; color: #94a3b8; }
+    .chart-toggle-btn.active[data-ds="0"] { background: rgba(52,211,153,.15);  border-color: rgba(52,211,153,.4);  color: #34d399; }
+    .chart-toggle-btn.active[data-ds="1"] { background: rgba(248,113,113,.15); border-color: rgba(248,113,113,.4); color: #f87171; }
+    .chart-toggle-btn.active[data-ds="2"] { background: rgba(129,140,248,.15); border-color: rgba(129,140,248,.4); color: #818cf8; }
+
+    .no-tx { text-align: center; padding: 3rem; color: #475569; font-size: .88rem; }
+
+    /* ── Filtered totals bar ── */
+    .filtered-summary { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; padding: .45rem .85rem; background: #13131a; border: 1px solid #2d2d3d; border-radius: 8px; font-size: .82rem; }
+    .fs-item { display: flex; align-items: center; gap: .35rem; }
+    .fs-label { color: #475569; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+    .fs-sep { color: #2d2d3d; font-size: .9rem; }
+
+    .expand-btn { background: none; border: none; cursor: pointer; color: #475569; padding: .1rem .25rem; border-radius: 4px; line-height: 1; vertical-align: middle; transition: color .15s, transform .15s; display: inline-flex; align-items: center; }
+    .expand-btn:hover { color: #818cf8; }
+    .expand-btn.open { transform: rotate(180deg); color: #818cf8; }
+    .sub-row td { background: #0d0d11 !important; border-bottom: 1px solid #1a1a24; }
+    .sub-row:hover td { background: #0f0f14 !important; }
+
+    /* stat card tooltip */
+    .sc-tooltip-wrap { position: relative; display: inline-flex; align-items: center; gap: .3rem; cursor: default; }
+    .sc-tooltip-wrap .sc-tip-icon { width: 12px; height: 12px; opacity: .45; flex-shrink: 0; vertical-align: middle; }
+    .sc-tooltip-wrap:hover .sc-tip-icon { opacity: .9; }
+    .sc-tip-box { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0d0d11; border: 1px solid #2d2d3d; border-radius: 8px; padding: .5rem .75rem; min-width: 210px; font-size: .75rem; color: #94a3b8; line-height: 1.55; white-space: normal; z-index: 100; pointer-events: none; opacity: 0; transition: opacity .15s; box-shadow: 0 6px 24px rgba(0,0,0,.5); }
+    .sc-tip-box strong { color: #e2e8f0; }
+    .sc-tip-box .tip-formula { margin-top: .35rem; font-size: .72rem; color: #475569; font-family: monospace; }
+    .sc-tooltip-wrap:hover .sc-tip-box { opacity: 1; }
+
+    .success-banner { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.3); border-radius: 10px; padding: .75rem 1rem; font-size: .85rem; color: #34d399; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .5rem; }
+    .success-banner svg { flex-shrink: 0; }
+
+    .btn-import { display: inline-flex; align-items: center; gap: .4rem; background: #1e1e2c; border: 1px solid #2d2d3d; color: #94a3b8; text-decoration: none; border-radius: 8px; padding: .4rem .9rem; font-size: .8rem; font-weight: 600; transition: background .15s, color .15s; }
+    .btn-import:hover { background: #20202e; color: #e2e8f0; }
+
+    /* ── Chart ── */
+    .chart-wrap { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .chart-wrap-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: 1rem; }
+    .chart-wrap canvas { max-height: 220px; }
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    {% if request.GET.imported %}
+    <div class="success-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Successfully imported {{ request.GET.imported }} transaction{{ request.GET.imported|pluralize }}.
+    </div>
+    {% endif %}
+    {% if request.GET.deleted %}
+    <div class="success-banner" style="background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#f87171">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Deleted {{ request.GET.deleted }} transaction{{ request.GET.deleted|pluralize }}.
+    </div>
+    {% endif %}
+
+    <div class="breadcrumb">
+      <a href="{% url 'store_list' %}">Stores</a>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      {{ store.name }}
+    </div>
+
+    <!-- ── Store info ── -->
+    <div class="store-hero">
+      <div class="store-hero-top">
+        <div class="store-hero-info">
+          <div class="sh-platform">{{ store.get_platform_display }}</div>
+          <div class="sh-name">{{ store.name }}</div>
+          {% if store.group %}
+          <div class="sh-group">Group: <a href="{% url 'store_list' %}">{{ store.group.name }}</a></div>
+          {% endif %}
+          {% if store.description %}<div class="sh-desc">{{ store.description }}</div>{% endif %}
+          {% if store.url %}<div class="sh-url"><a href="{{ store.url }}" target="_blank" rel="noopener">{{ store.url }}</a></div>{% endif %}
+        </div>
+        <div class="store-hero-badges">
+          <span class="status-pill {% if store.active %}active{% else %}inactive{% endif %}">
+            {% if store.active %}Active{% else %}Inactive{% endif %}
+          </span>
+          <a href="{% url 'import_amazon_csv' store.id %}" class="btn-import">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+            Import CSV
+          </a>
+          <a href="{% url 'vendor_list' store.id %}" class="btn-import">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8z"/></svg>
+            Vendors
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-main">
+
+        <!-- ── Stats ── -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap">
+                Net Profit
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Net Profit</strong><br>
+                  All income minus all expenses for this store, across every transaction type.
+                  <div class="tip-formula">= Total Income &minus; Total Expenses</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value {% if profit >= 0 %}p-pos{% else %}p-neg{% endif %}">
+              {% if profit >= 0 %}+{% endif %}${{ profit|floatformat:2 }}
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#34d399;">
+                Total Income
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#34d399" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Total Income</strong><br>
+                  Sum of every transaction marked as <em>income</em> for this store (Order Payments, refunds received, etc.).
+                  <div class="tip-formula">source: all income-type transactions</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value income">+${{ income|floatformat:2 }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#f87171;">
+                Total Expenses
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Total Expenses</strong><br>
+                  Sum of every transaction marked as <em>expense</em> — Amazon fees, production costs, vendor invoices, etc.
+                  <div class="tip-formula">source: all expense-type transactions</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value expense">-${{ expenses|floatformat:2 }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#818cf8;">
+                Transactions
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Transactions</strong><br>
+                  Total count of all income and expense transactions recorded for this store.
+                </div>
+              </span>
+            </div>
+            <div class="sc-value neutral">{{ tx_count }}</div>
+          </div>
+        </div>
+
+        <!-- ── Amazon Sales Profit breakdown ── -->
+        {% if amazon_gross %}
+        <div class="stat-row" style="margin-top:-.5rem;">
+
+          <div class="stat-card" style="border-color:#6366f1;">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#818cf8;">
+                Sales Profit
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Sales Profit</strong><br>
+                  Amazon order revenue after marketplace fees are deducted. Does <em>not</em> include production or other costs.
+                  <div class="tip-formula">= Gross Revenue &minus; Amazon Fees</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value {% if sales_profit >= 0 %}p-pos{% else %}p-neg{% endif %}">
+              {% if sales_profit >= 0 %}+{% endif %}${{ sales_profit|floatformat:2 }}
+            </div>
+          </div>
+
+          <div class="stat-card" style="border-color:#34d399;">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#34d399;">
+                Gross Revenue
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#34d399" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Gross Revenue</strong><br>
+                  Sum of the <em>Total product charges</em> column from your Amazon CSV — the full amount customers paid before any fees.
+                  <div class="tip-formula">source: &ldquo;Total product charges&rdquo; column</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value income">+${{ amazon_gross|floatformat:2 }}</div>
+          </div>
+
+          <div class="stat-card" style="border-color:#f87171;">
+            <div class="sc-label">
+              <span class="sc-tooltip-wrap" style="color:#f87171;">
+                Amazon Fees
+                <svg class="sc-tip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f87171" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+                <div class="sc-tip-box">
+                  <strong>Amazon Fees</strong><br>
+                  Total marketplace fees deducted by Amazon — referral fees, FBA fees, etc. Auto-imported from the <em>Amazon fees</em> column.
+                  <div class="tip-formula">source: &ldquo;Amazon fees&rdquo; column</div>
+                </div>
+              </span>
+            </div>
+            <div class="sc-value expense">-${{ amazon_fees_total|floatformat:2 }}</div>
+          </div>
+
+        </div>
+        {% endif %}
+
+        <!-- ── Daily Chart ── -->
+        {% if chart_daily %}
+        <div class="chart-wrap">
+          <p class="chart-wrap-title">Daily Income &amp; Expenses</p>
+          <canvas id="chartDaily"></canvas>
+        </div>
+        {% endif %}
+
+        <!-- ── Transactions ── -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <p class="section-title" style="margin-bottom:0">Transactions</p>
+        </div>
+        {% if transactions %}
+        <div class="tx-filters">
+          <button type="button" class="filter-btn active" data-filter="all">All</button>
+          <button type="button" class="filter-btn" data-filter="production">Has Production Cost</button>
+          <button type="button" class="filter-btn" data-filter="income">Income</button>
+          <button type="button" class="filter-btn" data-filter="expense">Expense</button>
+          <button type="button" class="filter-btn" data-filter="unlinked">No Vendor</button>
+          <div class="filter-sep"></div>
+          <div class="date-filter-wrap">
+            <label for="dateFrom">From</label>
+            <input type="date" id="dateFrom" />
+            <button type="button" class="btn-date-clear" id="clearFrom" title="Clear">×</button>
+          </div>
+          <div class="date-filter-wrap">
+            <label for="dateTo">To</label>
+            <input type="date" id="dateTo" />
+            <button type="button" class="btn-date-clear" id="clearTo" title="Clear">×</button>
+          </div>
+          <span class="filter-count" id="filterCount"></span>
+          <div class="filter-sep"></div>
+          <div class="tx-search-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13" style="color:#475569;flex-shrink:0"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="txSearch" placeholder="Search title, order, vendor&hellip;" autocomplete="off" />
+            <button type="button" id="clearSearch" class="btn-date-clear" title="Clear">&times;</button>
+          </div>
+          <button type="button" id="clearAllFilters" class="btn-date-clear" style="margin-left:.7rem;font-weight:700;color:#818cf8;border:1px solid #818cf8;padding:.32rem .9rem;border-radius:7px;">Clear All Filters</button>
+        </div>
+
+        <!-- ── Filtered totals ── -->
+        <div class="filtered-summary" id="filteredSummary" style="display:none">
+          <span class="fs-item"><span class="fs-label">Income</span>&nbsp;<span id="fsTotalIncome">—</span></span>
+          <span class="fs-sep">·</span>
+          <span class="fs-item"><span class="fs-label">Expenses</span>&nbsp;<span id="fsTotalExpenses">—</span></span>
+          <span class="fs-sep">·</span>
+          <span class="fs-item"><span class="fs-label">Net Profit</span>&nbsp;<span id="fsTotalProfit">—</span></span>
+        </div>
+
+        <!-- ── Filter chart ── -->
+        <div id="chartFilteredWrap" class="chart-wrap" style="margin-top:0;margin-bottom:1rem;display:none;">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap;">
+            <p class="chart-wrap-title" style="margin:0">Filtered &mdash; by Day</p>
+            <button type="button" id="toggleIncome"  class="chart-toggle-btn active" data-ds="0">Income</button>
+            <button type="button" id="toggleExpense" class="chart-toggle-btn active" data-ds="1">Expenses</button>
+            <button type="button" id="toggleProfit"  class="chart-toggle-btn active" data-ds="2">Net Profit</button>
+          </div>
+          <canvas id="chartFiltered" style="max-height:200px"></canvas>
+        </div>
+
+        <form method="post" action="{% url 'bulk_transactions' store.id %}" id="bulkForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" id="bulkAction" value="" />
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th style="width:32px"><input type="checkbox" id="selAll" title="Select all" /></th>
+              <th>Date</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th style="text-align:right">Amount</th>
+              <th>Vendor</th>
+              <th style="text-align:right;color:#34d399">Amazon Rev.</th>
+              <th style="text-align:right;color:#f87171">Amazon Fees</th>
+              <th style="text-align:right;color:#fb923c">Production</th>
+              <th style="text-align:right">Est. Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if paginator.num_pages > 1 %}
+            <div class="pagination" style="display:flex;gap:.5rem;align-items:center;justify-content:center;margin:1.2rem 0;">
+              {% if transactions.has_previous %}
+                <a href="?page={{ transactions.previous_page_number }}" class="filter-btn">Prev</a>
+              {% else %}
+                <span class="filter-btn" style="opacity:.5;pointer-events:none;">Prev</span>
+              {% endif %}
+              <span style="color:#818cf8;font-size:.85rem;font-weight:600;padding:0 .7rem;">Page {{ transactions.number }} of {{ paginator.num_pages }}</span>
+              {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}" class="filter-btn">Next</a>
+              {% else %}
+                <span class="filter-btn" style="opacity:.5;pointer-events:none;">Next</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% for tx in transactions %}
+            {% if paginator.num_pages > 1 %}
+            <div class="pagination" style="display:flex;gap:.5rem;align-items:center;justify-content:center;margin:1.2rem 0;">
+              {% if transactions.has_previous %}
+                <a href="?page={{ transactions.previous_page_number }}" class="filter-btn">Prev</a>
+              {% else %}
+                <span class="filter-btn" style="opacity:.5;pointer-events:none;">Prev</span>
+              {% endif %}
+              <span style="color:#818cf8;font-size:.85rem;font-weight:600;padding:0 .7rem;">Page {{ transactions.number }} of {{ paginator.num_pages }}</span>
+              {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}" class="filter-btn">Next</a>
+              {% else %}
+                <span class="filter-btn" style="opacity:.5;pointer-events:none;">Next</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if not tx.is_linked_expense %}
+            <tr class="tx-row"
+                data-tx-id="{{ tx.id }}"
+                data-date="{{ tx.date|date:'Y-m-d' }}"
+                data-amount="{{ tx.amount }}"
+                data-type="{{ tx.type }}"
+                data-search="{{ tx.title|lower }} {{ tx.order_number|default:''|lower }} {{ tx.vendor.name|default:''|lower }}"
+                data-has-production="{% if tx.col_production is not None %}1{% else %}0{% endif %}"
+                data-has-vendor="{% if tx.vendor %}1{% else %}0{% endif %}">
+              <td><input type="checkbox" name="tx_ids" value="{{ tx.id }}" class="row-check" /></td>
+              <td style="color:#64748b;white-space:nowrap">{{ tx.date }}</td>
+              <td>
+                {{ tx.title }}
+                {% if tx.note %}<div style="font-size:.75rem;color:#475569;margin-top:.15rem;">{{ tx.note }}</div>{% endif %}
+                {% if tx.order_number %}<div style="font-size:.72rem;color:#334155;margin-top:.1rem">Order: {{ tx.order_number }}</div>{% endif %}
+              </td>
+              <td style="color:#64748b">{{ tx.category|default:"—" }}</td>
+              <td><span class="type-pill {{ tx.type }}">{{ tx.get_type_display }}</span></td>
+              <td style="text-align:right">
+                <span class="{% if tx.type == 'income' %}amount-pos{% else %}amount-neg{% endif %}">
+                  {% if tx.type == 'income' %}+{% else %}-{% endif %}${{ tx.amount|floatformat:2 }}
+                </span>
+              </td>
+              <td style="font-size:.8rem">
+                {% if tx.vendor %}
+                  <span style="color:#a5b4fc;font-weight:600">{{ tx.vendor.name }}</span>
+                {% else %}
+                  <span style="color:#1e293b">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                {% if tx.col_revenue is not None %}
+                  <span class="amount-pos" style="font-size:.83rem">+${{ tx.col_revenue|floatformat:2 }}</span>
+                {% else %}
+                  <span style="color:#1e293b">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                {% if tx.col_amazon_fees is not None %}
+                  <span class="amount-neg" style="font-size:.83rem">-${{ tx.col_amazon_fees|floatformat:2 }}</span>
+                {% else %}
+                  <span style="color:#1e293b">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                {% if tx.col_production is not None %}
+                  <span class="amount-neg" style="font-size:.83rem">-${{ tx.col_production|floatformat:2 }}</span>
+                {% else %}
+                  <span style="color:#1e293b">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                {% if tx.order_profit is not None %}
+                <span class="{% if tx.order_profit >= 0 %}amount-pos{% else %}amount-neg{% endif %}" style="font-size:.85rem">
+                  {% if tx.order_profit >= 0 %}+{% endif %}${{ tx.order_profit|floatformat:2 }}
+                </span>
+                {% if tx.linked_expenses %}
+                <button type="button" class="expand-btn" data-group="exp-{{ tx.id }}" title="Show {{ tx.linked_expenses|length }} linked expense{{ tx.linked_expenses|length|pluralize }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                {% endif %}
+              {% else %}
+              <span style="color:#1e293b">—</span>
+              {% endif %}
+              </td>
+            </tr>
+            {% endif %}{# /not is_linked_expense #}
+            {% if tx.linked_expenses %}
+            {% for exp in tx.linked_expenses %}
+            <tr class="sub-row exp-{{ tx.id }}" style="display:none"
+                data-date="{{ exp.date|date:'Y-m-d' }}"
+                data-amount="{{ exp.amount }}"
+                data-type="expense">
+              <td></td>
+              <td style="color:#475569;white-space:nowrap;padding-left:1.75rem;font-size:.78rem">{{ exp.date }}</td>
+              <td style="padding-left:1.75rem">
+                <span style="color:#475569;font-size:.8rem">↳ {{ exp.title }}</span>
+                {% if exp.note %}<div style="font-size:.72rem;color:#334155;margin-top:.1rem">{{ exp.note }}</div>{% endif %}
+                {% if exp.order_number %}<div style="font-size:.7rem;color:#1e293b">Order: {{ exp.order_number }}</div>{% endif %}
+              </td>
+              <td style="color:#475569;font-size:.78rem">{{ exp.category|default:"—" }}</td>
+              <td><span class="type-pill expense" style="font-size:.6rem">expense</span></td>
+              <td style="text-align:right"><span class="amount-neg" style="font-size:.82rem">-${{ exp.amount|floatformat:2 }}</span></td>
+              <td style="font-size:.78rem">
+                {% if exp.vendor %}<span style="color:#a5b4fc">{{ exp.vendor.name }}</span>{% else %}<span style="color:#1e293b">—</span>{% endif %}
+              </td>
+              <td colspan="4"></td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+          <!-- floating bulk action bar -->
+          <div class="bulk-bar" id="bulkBar">
+            <span class="bulk-count" id="bulkCount">0 selected</span>
+            <span class="bulk-spacer"></span>
+            <button type="button" class="btn-bulk-delete" id="btnDelete">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Delete selected
+            </button>
+            <button type="button" class="btn-bulk-cancel" id="btnCancel">✕ Clear</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="no-tx">No transactions recorded for this store yet.</div>
+        {% endif %}
+
+      </div>{# /detail-main #}
+
+      <!-- ── Vendor panel ── -->
+      {% if vendors %}
+      <aside class="vendor-aside">
+        <div class="va-header">
+          <span class="va-title">Vendors ({{ vendors|length }})</span>
+          <span class="va-actions">
+            <a href="{% url 'import_vendor_invoices' store.id %}" class="va-link">Import →</a>
+            <a href="{% url 'vendor_list' store.id %}" class="va-link" style="margin-left:.5rem">Manage →</a>
+          </span>
+        </div>
+        {% for v in vendors %}
+        <div class="vendor-item">
+          <div class="vi-name">{{ v.name }}</div>
+          <div class="vi-cat cat-{{ v.category }}">{{ v.get_category_display }}</div>
+          {% if v.fee_type != 'variable' or v.fee_value %}
+          <div class="vi-row">
+            {{ v.get_fee_type_display }}{% if v.fee_value %}
+              &nbsp;&mdash;&nbsp;{% if v.fee_type == 'percentage' %}{{ v.fee_value }}%{% else %}${{ v.fee_value }}{% endif %}
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if v.website %}
+          <div class="vi-row"><a href="{{ v.website }}" target="_blank" rel="noopener">{{ v.website }}</a></div>
+          {% endif %}
+          {% if v.notes %}
+          <div class="vi-row" style="color:#334155;font-size:.72rem">{{ v.notes }}</div>
+          {% endif %}
+          <a href="{% url 'import_vendor_invoices' store.id %}" class="vi-import-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+            Import Invoices
+          </a>
+        </div>
+        {% endfor %}
+      </aside>
+      {% endif %}
+
+    </div>{# /detail-grid #}
+
+<!-- ── Chart double-click detail panel ── -->
+<div id="chartDetailPanel" style="display:none;position:fixed;z-index:300;background:#1a1a24;border:1px solid #6366f1;border-radius:12px;padding:.85rem 1.1rem;min-width:230px;box-shadow:0 10px 36px rgba(0,0,0,.75);">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+    <span id="cdpDate" style="font-size:.85rem;font-weight:700;color:#e2e8f0;"></span>
+    <button id="cdpClose" title="Close &amp; reset zoom" style="background:none;border:none;color:#475569;cursor:pointer;font-size:1.15rem;line-height:1;padding:.1rem .35rem;border-radius:4px;">×</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:.3rem;font-size:.83rem;margin-bottom:.65rem;">
+    <div style="display:flex;justify-content:space-between;gap:2rem;">
+      <span style="color:#475569;">Income</span>
+      <span id="cdpIncome" style="color:#34d399;font-weight:700;"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:2rem;">
+      <span style="color:#475569;">Expenses</span>
+      <span id="cdpExpenses" style="color:#f87171;font-weight:700;"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:2rem;border-top:1px solid #2d2d3d;padding-top:.32rem;margin-top:.12rem;">
+      <span style="color:#94a3b8;font-weight:600;">Net Profit</span>
+      <span id="cdpProfit" style="font-weight:800;"></span>
+    </div>    <div style="display:flex;justify-content:space-between;gap:2rem;border-top:1px solid #2d2d3d;padding-top:.32rem;margin-top:.12rem;">
+      <span style="color:#475569;">Orders</span>
+      <span id="cdpUnits" style="color:#818cf8;font-weight:700;"></span>
+    </div>  </div>
+  <button id="cdpCopy" style="width:100%;background:#13131a;border:1px solid #2d2d3d;color:#64748b;border-radius:7px;padding:.32rem .6rem;font-size:.75rem;font-weight:600;cursor:pointer;">Copy</button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if chart_daily %}
+<script>
+(function(){
+  const daily = {{ chart_daily|safe }};
+  const GRID='rgba(45,45,61,0.6)', TICK='#475569';
+  const GREEN='#34d399', RED='#f87171', INDIGO='#818cf8';
+  const GREEN_A='rgba(52,211,153,0.15)', RED_A='rgba(248,113,113,0.15)';
+  Chart.defaults.color = TICK;
+  const dailyChart = new Chart(document.getElementById('chartDaily'), {
+    type: 'bar',
+    data: {
+      labels: daily.labels,
+      datasets: [
+        { label:'Income',    data: daily.income,   backgroundColor: GREEN_A, borderColor: GREEN,  borderWidth: 1.5, borderRadius: 3 },
+        { label:'Expenses',  data: daily.expenses, backgroundColor: RED_A,   borderColor: RED,    borderWidth: 1.5, borderRadius: 3 },
+        { label:'Net Profit',data: daily.profit,   type: 'line', borderColor: INDIGO, backgroundColor:'transparent', borderWidth:2, pointRadius:2, tension:0.3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode:'index', intersect:false },
+      scales: {
+        x: { grid:{ color:GRID }, ticks:{ color:TICK, maxTicksLimit:14, font:{size:10} } },
+        y: { grid:{ color:GRID }, ticks:{ color:TICK, callback: v => '$'+v } }
+      }
+    }
+  });
+  if (daily.income_counts) dailyChart._incomeCounts = daily.income_counts;
+})();
+</script>
+{% endif %}
+<script>
+(function () {
+  const selAll   = document.getElementById('selAll');
+  const bulkBar  = document.getElementById('bulkBar');
+  const bulkCount= document.getElementById('bulkCount');
+  const bulkForm = document.getElementById('bulkForm');
+  const bulkAct  = document.getElementById('bulkAction');
+  if (!selAll) return;
+
+  function getChecked() { return [...document.querySelectorAll('.row-check:checked')]; }
+
+  function updateBar() {
+    const checked = getChecked();
+    if (checked.length > 0) {
+      bulkBar.classList.add('visible');
+      bulkCount.textContent = checked.length + ' selected';
+    } else {
+      bulkBar.classList.remove('visible');
+    }
+    // highlight rows
+    document.querySelectorAll('.tx-row').forEach(tr => {
+      const cb = tr.querySelector('.row-check');
+      tr.classList.toggle('row-selected', cb && cb.checked);
+    });
+    selAll.indeterminate = checked.length > 0 && checked.length < document.querySelectorAll('.row-check').length;
+    selAll.checked = checked.length > 0 && checked.length === document.querySelectorAll('.row-check').length;
+  }
+
+  selAll.addEventListener('change', () => {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = selAll.checked);
+    updateBar();
+  });
+  document.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', updateBar));
+
+  document.getElementById('btnDelete').addEventListener('click', () => {
+    const n = getChecked().length;
+    if (!n) return;
+    if (confirm(`Delete ${n} transaction${n === 1 ? '' : 's'}? This cannot be undone.`)) {
+      bulkAct.value = 'delete';
+      bulkForm.submit();
+    }
+  });
+
+  document.getElementById('btnCancel').addEventListener('click', () => {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = false);
+    selAll.checked = false;
+    updateBar();
+  });
+})();
+
+// Expand/collapse linked expense sub-rows
+document.querySelectorAll('.expand-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const group = btn.dataset.group;
+    const rows = document.querySelectorAll('tr.' + group);
+    const opening = rows.length && rows[0].style.display === 'none';
+    rows.forEach(r => r.style.display = opening ? 'table-row' : 'none');
+    btn.classList.toggle('open', opening);
+  });
+});
+
+// ── Transaction filters ────────────────────────────────────────────────────
+(function() {
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const countEl    = document.getElementById('filterCount');
+  if (!filterBtns.length) return;
+
+  const dateFrom   = document.getElementById('dateFrom');
+  const dateTo     = document.getElementById('dateTo');
+  const txSearch   = document.getElementById('txSearch');
+  const clearSearch = document.getElementById('clearSearch');
+  let activeMode = 'all';
+
+  // ── Filtered chart ─────────────────────────────────────────────────────
+  let filterChart = null;
+  const chartWrap = document.getElementById('chartFilteredWrap');
+
+  // Dataset visibility toggles
+  document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const dsIndex = parseInt(this.dataset.ds);
+      this.classList.toggle('active');
+      if (filterChart) {
+        const meta = filterChart.getDatasetMeta(dsIndex);
+        meta.hidden = !this.classList.contains('active');
+        filterChart.update();
+      }
+    });
+  });
+  function buildFilterChart(visibleRows) {
+    const canvas = document.getElementById('chartFiltered');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    // Re-read the active date range so sub-rows are filtered too
+    const cfFrom = dateFrom && dateFrom.value ? new Date(dateFrom.value + 'T00:00:00') : null;
+    const cfTo   = dateTo   && dateTo.value   ? new Date(dateTo.value   + 'T23:59:59') : null;
+
+    function inRange(iso) {
+      if (!iso || (!cfFrom && !cfTo)) return true;
+      const d = new Date(iso + 'T12:00:00');
+      if (cfFrom && d < cfFrom) return false;
+      if (cfTo   && d > cfTo)   return false;
+      return true;
+    }
+
+    // Collect all rows to chart: visible main rows + linked expense sub-rows (date-filtered)
+    const rowSet = new Map(); // keyed by element to avoid duplicates
+    visibleRows.forEach(row => rowSet.set(row, true));
+    visibleRows.forEach(row => {
+      const txId = row.dataset.txId;
+      if (txId) {
+        document.querySelectorAll('tr.exp-' + txId).forEach(sub => {
+          if (inRange(sub.dataset.date || '')) rowSet.set(sub, true);
+        });
+      }
+    });
+    const allRows = [...rowSet.keys()];
+
+    if (allRows.length === 0) {
+      if (chartWrap) chartWrap.style.display = 'none';
+      return;
+    }
+    const dateMap = {};
+    allRows.forEach(row => {
+      const iso = row.dataset.date || '';
+      if (!iso) return;
+      const amt = parseFloat(row.dataset.amount || '0') || 0;
+      if (!dateMap[iso]) dateMap[iso] = { income: 0, expense: 0, incomeCount: 0 };
+      const isIncome = row.dataset.type === 'income';
+      if (isIncome) { dateMap[iso].income += amt; dateMap[iso].incomeCount++; }
+      else            dateMap[iso].expense += amt;
+    });
+    const sortedDates = Object.keys(dateMap).sort();
+    if (!sortedDates.length) { if (chartWrap) chartWrap.style.display = 'none'; return; }
+    if (chartWrap) chartWrap.style.display = '';
+    const labels   = sortedDates;
+    const income   = sortedDates.map(d => +dateMap[d].income.toFixed(2));
+    const expenses = sortedDates.map(d => +dateMap[d].expense.toFixed(2));
+    const profit   = sortedDates.map((d, i) => +(income[i] - expenses[i]).toFixed(2));
+    const counts   = sortedDates.map(d => dateMap[d].incomeCount || 0);
+    const GRID = 'rgba(45,45,61,0.6)', TICK = '#475569';
+    const GREEN = '#34d399', RED = '#f87171', INDIGO = '#818cf8';
+    const GREEN_A = 'rgba(52,211,153,0.15)', RED_A = 'rgba(248,113,113,0.15)';
+    if (filterChart) {
+      filterChart.data.labels = labels;
+      filterChart.data.datasets[0].data = income;
+      filterChart.data.datasets[1].data = expenses;
+      filterChart.data.datasets[2].data = profit;
+      filterChart._incomeCounts = counts;
+      filterChart.update();
+    } else {
+      filterChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Income',    data: income,   backgroundColor: GREEN_A, borderColor: GREEN,  borderWidth: 1.5, borderRadius: 3 },
+            { label: 'Expenses',  data: expenses, backgroundColor: RED_A,   borderColor: RED,    borderWidth: 1.5, borderRadius: 3 },
+            { label: 'Net Profit',data: profit,   type: 'line', borderColor: INDIGO, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { grid: { color: GRID }, ticks: { color: TICK, maxTicksLimit: 14, font: { size: 10 } } },
+            y: { grid: { color: GRID }, ticks: { color: TICK, callback: v => '$' + v } }
+          },
+          plugins: { legend: { labels: { color: TICK, font: { size: 11 } } } }
+        }
+      });
+      filterChart._incomeCounts = counts;
+    }
+  }
+
+  function applyFilter() {
+    const from = dateFrom && dateFrom.value ? new Date(dateFrom.value + 'T00:00:00') : null;
+    const to   = dateTo   && dateTo.value   ? new Date(dateTo.value   + 'T23:59:59') : null;
+
+    const mainRows = document.querySelectorAll('.tx-row');
+    let visible = 0;
+    const visibleRows = [];
+    mainRows.forEach(row => {
+      const isIncome  = row.querySelector('.type-pill.income')  !== null;
+      const isExpense = row.querySelector('.type-pill.expense') !== null;
+
+      let show = false;
+      if      (activeMode === 'all')        show = true;
+      else if (activeMode === 'production') show = row.dataset.hasProduction === '1';
+      else if (activeMode === 'income')     show = isIncome;
+      else if (activeMode === 'expense')    show = isExpense;
+      else if (activeMode === 'unlinked')   show = row.dataset.hasVendor === '0';
+
+      if (show && (from || to)) {
+        const iso = row.dataset.date || '';
+        if (iso) {
+          const rowDate = new Date(iso + 'T12:00:00');
+          if (from && rowDate < from) show = false;
+          if (to   && rowDate > to)   show = false;
+        }
+      }
+
+      // Search filter
+      if (show && txSearch && txSearch.value.trim()) {
+        const term = txSearch.value.trim().toLowerCase();
+        show = (row.dataset.search || '').includes(term);
+      }
+
+      row.style.display = show ? '' : 'none';
+      const txId = row.dataset.txId;
+      if (txId) {
+        document.querySelectorAll('tr.exp-' + txId).forEach(sub => {
+          sub.style.display = (show && sub.style.display !== 'none') ? 'table-row' : 'none';
+        });
+      }
+      if (show) { visible++; visibleRows.push(row); }
+    });
+    if (countEl) countEl.textContent = visible + ' row' + (visible === 1 ? '' : 's');
+    buildFilterChart(visibleRows);
+
+    // Update filtered totals
+    let filtIncome = 0, filtExpense = 0;
+    visibleRows.forEach(row => {
+      const amt = parseFloat(row.dataset.amount || '0') || 0;
+      if (row.dataset.type === 'income')       filtIncome  += amt;
+      else if (row.dataset.type === 'expense') filtExpense += amt;
+    });
+    const filtProfit = filtIncome - filtExpense;
+    const fmtAmt = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const incEl  = document.getElementById('fsTotalIncome');
+    const expEl  = document.getElementById('fsTotalExpenses');
+    const profEl = document.getElementById('fsTotalProfit');
+    const summEl = document.getElementById('filteredSummary');
+    if (incEl)  { incEl.textContent  = '+' + fmtAmt(filtIncome);  incEl.className  = 'amount-pos'; }
+    if (expEl)  { expEl.textContent  = '-' + fmtAmt(filtExpense); expEl.className  = 'amount-neg'; }
+    if (profEl) { profEl.textContent = (filtProfit >= 0 ? '+' : '-') + fmtAmt(filtProfit); profEl.className = filtProfit >= 0 ? 'amount-pos' : 'amount-neg'; }
+    if (summEl) summEl.style.display = '';
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeMode = this.dataset.filter;
+      applyFilter();
+    });
+  });
+
+
+  if (dateFrom) dateFrom.addEventListener('change', applyFilter);
+  if (dateTo)   dateTo.addEventListener('change', applyFilter);
+  if (txSearch) txSearch.addEventListener('input', applyFilter);
+  if (clearSearch) clearSearch.addEventListener('click', function() { txSearch.value = ''; applyFilter(); });
+
+  // Clear All Filters button
+  const clearAllBtn = document.getElementById('clearAllFilters');
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', function() {
+      // Reset type filter
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+      if (allBtn) allBtn.classList.add('active');
+      activeMode = 'all';
+      // Reset date
+      if (dateFrom) dateFrom.value = '';
+      if (dateTo)   dateTo.value = '';
+      // Reset search
+      if (txSearch) txSearch.value = '';
+      applyFilter();
+    });
+  }
+
+  const clearFrom = document.getElementById('clearFrom');
+  const clearTo   = document.getElementById('clearTo');
+  if (clearFrom) clearFrom.addEventListener('click', function() { dateFrom.value = ''; applyFilter(); });
+  if (clearTo)   clearTo.addEventListener('click',   function() { dateTo.value   = ''; applyFilter(); });
+
+  // Initialise with all rows visible
+  applyFilter();
+})();
+
+// ── Double-click detail panel & chart zoom ─────────────────────────────────
+(function () {
+  function fmt(v) {
+    return '$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function resetZoom(chart) {
+    if (!chart) return;
+    delete chart.options.scales.x.min;
+    delete chart.options.scales.x.max;
+    chart._dblIdx = undefined;
+    chart.update('none');
+  }
+
+  function showPanel(e, chart, idx) {
+    const labels   = chart.data.labels;
+    const income   = +(chart.data.datasets[0]?.data[idx] ?? 0);
+    const expenses = +(chart.data.datasets[1]?.data[idx] ?? 0);
+    const profit   = +(chart.data.datasets[2]?.data[idx] ?? (income - expenses));
+    const units    = chart._incomeCounts ? (chart._incomeCounts[idx] ?? 0) : 0;
+    const label    = labels[idx];
+
+    // Zoom to only the selected date
+    chart.options.scales.x.min = labels[idx];
+    chart.options.scales.x.max = labels[idx];
+    chart._dblIdx = idx;
+    chart.update('none');
+
+    // Populate panel
+    document.getElementById('cdpDate').textContent     = label;
+    document.getElementById('cdpIncome').textContent   = '+' + fmt(income);
+    document.getElementById('cdpExpenses').textContent = '-' + fmt(expenses);
+    const profEl = document.getElementById('cdpProfit');
+    profEl.textContent = (profit >= 0 ? '+' : '-') + fmt(profit);
+    profEl.style.color = profit >= 0 ? '#34d399' : '#f87171';
+    const unitsEl = document.getElementById('cdpUnits');
+    if (unitsEl) unitsEl.textContent = units + ' order' + (units === 1 ? '' : 's');
+
+    const panel = document.getElementById('chartDetailPanel');
+    panel.dataset.copyText    = 'Date: ' + label + '\nOrders: ' + units + '\nIncome: +' + fmt(income) + '\nExpenses: -' + fmt(expenses) + '\nNet Profit: ' + (profit >= 0 ? '+' : '-') + fmt(profit);
+    panel.dataset.chartCanvas = e.currentTarget.id;
+
+    // Position near cursor, keep on screen
+    let px = e.clientX + 16, py = e.clientY - 12;
+    if (px + 250 > window.innerWidth)  px = e.clientX - 260;
+    if (py + 200 > window.innerHeight) py = window.innerHeight - 212;
+    panel.style.left    = px + 'px';
+    panel.style.top     = py + 'px';
+    panel.style.display = '';
+    // --- Show only transactions for this date ---
+    const txRows = document.querySelectorAll('.tx-row');
+    let shown = 0;
+    txRows.forEach(row => {
+      if (row.dataset.date === label) {
+        row.style.display = '';
+        // Hide linked expenses by default
+        const txId = row.dataset.txId;
+        if (txId) {
+          document.querySelectorAll('tr.exp-' + txId).forEach(sub => {
+            sub.style.display = 'none';
+          });
+        }
+        shown++;
+      } else {
+        row.style.display = 'none';
+        // Hide linked expenses
+        const txId = row.dataset.txId;
+        if (txId) {
+          document.querySelectorAll('tr.exp-' + txId).forEach(sub => {
+            sub.style.display = 'none';
+          });
+        }
+      }
+    });
+    // Optionally scroll to first shown row
+    if (shown > 0) {
+      const first = [...txRows].find(row => row.style.display !== 'none');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    // Collapse all expand buttons
+    document.querySelectorAll('.expand-btn.open').forEach(btn => btn.classList.remove('open'));
+  }
+
+  function onDblClick(e) {
+    if (typeof Chart === 'undefined') return;
+    const chart = Chart.getChart(e.currentTarget);
+    if (!chart) return;
+    const pts = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, true);
+    if (!pts.length) return;
+    const idx = pts[0].index;
+    // Toggle off if same point
+    if (chart._dblIdx === idx) {
+      resetZoom(chart);
+      document.getElementById('chartDetailPanel').style.display = 'none';
+      return;
+    }
+    showPanel(e, chart, idx);
+  }
+
+  ['chartDaily', 'chartFiltered'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('dblclick', onDblClick);
+  });
+
+  // Close button
+  const closeBtn = document.getElementById('cdpClose');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function () {
+      const panel = document.getElementById('chartDetailPanel');
+      const id = panel.dataset.chartCanvas;
+      panel.style.display = 'none';
+      if (id && typeof Chart !== 'undefined') resetZoom(Chart.getChart(document.getElementById(id)));
+    });
+  }
+
+  // Copy button
+  const copyBtn = document.getElementById('cdpCopy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      const text = document.getElementById('chartDetailPanel').dataset.copyText || '';
+      const self = this;
+      function done() { self.textContent = '✓ Copied'; setTimeout(function () { self.textContent = 'Copy'; }, 1500); }
+      function fallback() {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallback(); done(); });
+      } else { fallback(); done(); }
+    });
+  }
+
+  // Dismiss on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    const panel = document.getElementById('chartDetailPanel');
+    if (!panel || panel.style.display === 'none') return;
+    const id = panel.dataset.chartCanvas;
+    panel.style.display = 'none';
+    if (id && typeof Chart !== 'undefined') resetZoom(Chart.getChart(document.getElementById(id)));
+  });
+})();
+</script>
+{% endblock %}

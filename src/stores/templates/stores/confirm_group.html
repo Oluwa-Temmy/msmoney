@@ -1,0 +1,141 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — Group Stores?{% endblock %}
+
+{% block header_badge %}Stores{% endblock %}
+
+{% block extra_styles %}
+<style>
+.confirm-card {
+      background: #1a1a24;
+      border: 1px solid #2d2d3d;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 560px;
+    }
+
+    .confirm-card h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .confirm-card .subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-bottom: 1.75rem;
+      line-height: 1.6;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .compare-box {
+      background: #0f0f13;
+      border: 1px solid #2d2d3d;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .compare-box .box-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #475569;
+      margin-bottom: 0.4rem;
+    }
+
+    .compare-box .box-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .compare-box .box-platform {
+      font-size: 0.75rem;
+      color: #818cf8;
+      margin-top: 0.2rem;
+    }
+
+    .divider {
+      width: 1px;
+      background: #2d2d3d;
+      align-self: stretch;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-yes {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-yes:hover { background: #4f46e5; }
+
+    .btn-no {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #2d2d3d;
+      border-radius: 8px;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-no:hover { background: #20202e; color: #e2e8f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+      <div class="confirm-card">
+        <h2>Are these the same business?</h2>
+        <p class="subtitle">
+          A store named <strong style="color:#e2e8f0;">{{ pending_name }}</strong> already exists.
+          If these are related (e.g. two accounts for the same business), they'll be grouped together on the dashboard.
+        </p>
+
+        <div class="compare">
+          <div class="compare-box">
+            <div class="box-label">Existing store</div>
+            <div class="box-name">{{ existing.name }}</div>
+            <div class="box-platform">{{ existing.get_platform_display }}</div>
+          </div>
+          <div class="compare-box">
+            <div class="box-label">New store</div>
+            <div class="box-name">{{ pending_name }}</div>
+            <div class="box-platform">{{ pending_platform }}</div>
+          </div>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="existing_id" value="{{ existing_id }}" />
+          <div class="actions">
+            <button type="submit" name="choice" value="group" class="btn-yes">
+              Yes, group them together
+            </button>
+            <button type="submit" name="choice" value="separate" class="btn-no">
+              No, they're different — rename
+            </button>
+          </div>
+        </form>
+      </div>
+{% endblock %}

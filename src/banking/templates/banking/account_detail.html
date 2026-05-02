@@ -1,0 +1,135 @@
+{% extends 'base/base.html' %}
+
+{% block title %}MS Money — {{ account.name }}{% endblock %}
+
+{% block header_badge %}Banking{% endblock %}
+
+{% block extra_styles %}
+<style>
+/* ── Hero ── */
+    .account-hero { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 14px; padding: 1.5rem 1.75rem; margin-bottom: 1.75rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .ah-left h2 { font-size: 1.2rem; font-weight: 700; color: #fff; }
+    .ah-left .ah-meta { font-size: .82rem; color: #475569; margin-top: .25rem; }
+    .ah-type { font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; color: #818cf8; font-weight: 700; margin-bottom: .3rem; }
+    .btn-import { display: inline-flex; align-items: center; gap: .4rem; background: #1e1e2c; border: 1px solid #2d2d3d; color: #94a3b8; text-decoration: none; border-radius: 8px; padding: .4rem .9rem; font-size: .8rem; font-weight: 600; transition: background .15s, color .15s; }
+    .btn-import:hover { background: #20202e; color: #e2e8f0; }
+    .btn-back { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: #475569; text-decoration: none; margin-bottom: 1.25rem; }
+    .btn-back:hover { color: #818cf8; }
+
+    /* ── Stat row ── */
+    .stat-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+    .stat-card { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; padding: 1rem 1.25rem; flex: 1; min-width: 130px; }
+    .sc-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: .4rem; }
+    .sc-value { font-size: 1.35rem; font-weight: 700; }
+    .sc-value.pos     { color: #34d399; }
+    .sc-value.neg     { color: #f87171; }
+    .sc-value.credits { color: #34d399; }
+    .sc-value.debits  { color: #f87171; }
+    .sc-value.neutral { color: #818cf8; }
+
+    /* ── Success banner ── */
+    .success-banner { background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.3); border-radius: 10px; padding: .75rem 1rem; font-size: .85rem; color: #34d399; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .5rem; }
+
+    /* ── Transactions table ── */
+    .section-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin-bottom: .75rem; }
+    .tx-wrap { background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 12px; overflow: hidden; }
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #2d2d3d; white-space: nowrap; }
+    .tx-table td { padding: .65rem .75rem; font-size: .85rem; border-bottom: 1px solid #1e1e2c; vertical-align: middle; }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: #16161f; }
+
+    .pill-credit  { display: inline-block; font-size: .62rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; background: rgba(52,211,153,.12); color: #34d399; }
+    .pill-debit   { display: inline-block; font-size: .62rem; font-weight: 700; padding: .18rem .5rem; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; background: rgba(248,113,113,.12); color: #f87171; }
+    .amt-credit { color: #34d399; font-weight: 600; }
+    .amt-debit  { color: #f87171; font-weight: 600; }
+    .bal-val    { color: #64748b; font-size: .82rem; }
+
+    .no-tx { text-align: center; padding: 3rem; color: #475569; font-size: .88rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <a href="{% url 'account_list' %}" class="btn-back">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      All Accounts
+    </a>
+
+    {% if import_created is not None %}
+    <div class="success-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      {{ import_created }} transaction(s) imported successfully.{% if import_dupes %} {{ import_dupes }} duplicate(s) skipped.{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="account-hero">
+      <div class="ah-left">
+        <div class="ah-type">{{ account.get_account_type_display }}</div>
+        <h2>{{ account.name }}</h2>
+        <p class="ah-meta">
+          {% if account.bank_name %}{{ account.bank_name }}{% endif %}
+          {% if account.last4 %} &middot; ••••&nbsp;{{ account.last4 }}{% endif %}
+        </p>
+      </div>
+      <a href="{% url 'import_statement' account.id %}" class="btn-import">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+        Import Statement
+      </a>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="sc-label">Net Flow</div>
+        <div class="sc-value {% if net >= 0 %}pos{% else %}neg{% endif %}">
+          {% if net >= 0 %}+{% endif %}${{ net|floatformat:2 }}
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Total Credits</div>
+        <div class="sc-value credits">+${{ credits|floatformat:2 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Total Debits</div>
+        <div class="sc-value debits">-${{ debits|floatformat:2 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Transactions</div>
+        <div class="sc-value neutral">{{ tx_count }}</div>
+      </div>
+    </div>
+
+    <p class="section-title">Transactions</p>
+    {% if transactions %}
+    <div class="tx-wrap">
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th style="text-align:right;">Amount</th>
+            <th style="text-align:right;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td style="white-space:nowrap; color:#64748b;">{{ tx.date }}</td>
+            <td>{{ tx.description }}</td>
+            <td><span class="pill-{{ tx.type }}">{{ tx.type }}</span></td>
+            <td style="text-align:right;" class="amt-{{ tx.type }}">
+              {% if tx.type == 'credit' %}+{% else %}-{% endif %}${{ tx.amount|floatformat:2 }}
+            </td>
+            <td style="text-align:right;" class="bal-val">
+              {% if tx.balance_after %}${{ tx.balance_after|floatformat:2 }}{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="no-tx">No transactions yet. <a href="{% url 'import_statement' account.id %}" style="color:#6366f1;text-decoration:none;">Import a statement</a></div>
+    {% endif %}
+{% endblock %}
