@@ -65,6 +65,11 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Then open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+
+## License
+
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0). Commercial use is not permitted.
+
+See the LICENSE.md file or visit https://creativecommons.org/licenses/by-nc/4.0/ for details.
 
 
