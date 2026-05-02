@@ -61,6 +61,7 @@ coverage.xml
 
 # VS Code
 .vscode/
+.trees/
 
 # macOS
 .DS_Store
