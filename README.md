@@ -17,6 +17,15 @@ Whether you're selling on one platform or juggling multiple stores, Ms Money hel
 - **See the big picture** — Charts, summaries, and financial dashboards so you always know how your business is doing
 
 
+
+## Tech Stack
+
+- **Python 3.13+** — Core programming language
+- **Django** — Web framework for rapid development and clean, pragmatic design
+- **SQLite** — Default database for development and lightweight deployments
+- **HTML/CSS** — Templating and UI
+- **[uv](https://docs.astral.sh/uv/)** — Fast Python package/dependency manager (recommended)
+
 ## Financial Features
 
 - **Business & Personal Finance**: Track both business and personal transactions for a complete financial overview
